@@ -47,6 +47,8 @@ IN THE PRODUCT.
 #define ARVID_TATE_SWITCH (1 << 19)
 #define ARVID_COIN_BUTTON (1 << 17)
 
+#define FLAG_NO_FB_CLEAR (1 << 0)
+
 typedef enum  {
 	arvid_320 = 0,
 	arvid_256,
@@ -62,10 +64,16 @@ typedef enum  {
 
 /**
 Initializes Arvic: loads pru code, creates frame buffer mappings.
-Also sets the video mode to 320x240 50Hz, black frame buffers.
+Also sets the video mode to 320x240 60Hz, black frame buffers.
 returns: 0 if OK
 */
 int arvid_init(void);
+
+/**
+Same as above, but with extra initialisation flags.
+FLAG_NO_FB_CLEAR - will not clear frame buffers
+*/
+int arvid_init_ex(int initFlags);
 
 
 /**

@@ -21,7 +21,7 @@ notes:
 - libarvid requires superuser access to access PRUSS and gpios
 - libarvid manages setting up cape manager itself
 - libarvid manages ddr mapping itself
-- works only on BBB not on older HW as it depends on exact PRU timing (older 
+- works on BBB and BBG but not on older HW as it depends on exact PRU timing (older 
   hardware PRU clock is slower)
 - pru binary code (prustream.bin, pruvideo_XXX.bin) have to exist in
   current working directory of an application that uses/links libarvid

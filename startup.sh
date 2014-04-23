@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#this is the statup script executed from /etc/rc.local
+#this is the startup script executed from /etc/rc.local
 
 infinity=1
 
@@ -8,7 +8,7 @@ infinity=1
 cd /home/debian/dev/libarvid
 
 #show splash
-./arvid-splash mame.png > splash.txt
+./arvid-splash > splash.txt
 
 #wait till everything is initialised & settled
 sleep 14
@@ -20,7 +20,7 @@ echo "Starting" > log.txt
 
 while [ $infinity -gt 0 ]; do
 	#start the server
-	./arvid-server >> log.txt
+	./arvid-server -noServiceScreen  >> log.txt
 
 	#if the server unexpectedly stopped, then start it again
 	#unless 'stop' file exists

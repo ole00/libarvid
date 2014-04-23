@@ -175,6 +175,9 @@ static unsigned char tiles[][64] = {
 
 };
 
+
+static int noServiceScreen = 0;
+static char* noIpAddress = "0.0.0.0";
 unsigned short* fb[2];
 
 unsigned char* zSrcData;
@@ -227,8 +230,7 @@ static void getIpAddress(char** result) {
 
 	//no network
 	if (eth0Enabled == 0 && usb0Enabled == 0) {
-		*result = (char*) malloc(10);
-		strcpy(*result, "0.0.0.0");
+		*result = noIpAddress;
 		return;
 	}
 
@@ -267,13 +269,28 @@ static void fillRect(int x, int y,int w, int h, unsigned short color, int frameI
 	}
 }
 
-static void paintTile(int x, int  y, int tileIndex, unsigned short color, int frameIndex) {
+static void paintTile(int x, int  y, int tileIndex, unsigned short color, int frameIndex, int rotate) {
 	int  j, i;
 	unsigned short* ptr = fb[frameIndex];
 	unsigned char* src = tiles[tileIndex];
 	int maxW = arvid_get_width();
+	unsigned short* dst;
 
 	ptr += maxW * y + x;
+
+	if (rotate) {
+		for (j = 0; j < 8; j++) {
+			dst = ptr + (7 - j);
+			for (i = 0; i < 8; i++) {
+				if (src[i]) {
+					*dst = color;
+				}
+				dst += maxW;
+			}
+			src += 8;
+		}
+		return;
+	}
 
 	for (j = 0; j < 8; j++) {
 		for (i = 0; i < 8; i++) {
@@ -287,7 +304,7 @@ static void paintTile(int x, int  y, int tileIndex, unsigned short color, int fr
 }
 
 //naive number painting
-static void paintString(char* text, int x, int y,unsigned short color) {
+static void paintString(char* text, int x, int y,unsigned short color, int rotate) {
 	while (*text != 0) {
 		char c = *text;
 		int index = c - '0';
@@ -296,11 +313,26 @@ static void paintString(char* text, int x, int y,unsigned short color) {
 		}
 
 		if (index >= 0 && index <= 10) {
-			paintTile(x, y, index, color, 0);
-			paintTile(x, y, index, color, 1);
-			x += 8;
+			//draw to both frame buffers
+			paintTile(x, y, index, color, 0, rotate);
+			paintTile(x, y, index, color, 1, rotate);
+			if (rotate) {
+				y += 8;
+			} else {
+				x += 8;
+			}
 		}
 		text++;
+	}
+}
+
+static void checkArguments(int argc, char**argv) {
+	int i;
+
+	for (i = 1; i < argc; i++) {
+		if (strcmp("-noServiceScreen", argv[i]) == 0) {
+			noServiceScreen = 1;
+		}
 	}
 }
 
@@ -316,6 +348,9 @@ int main(int argc, char**argv)
 	unsigned char* zWindow;
 	char* ipAddr = NULL;
 	unsigned short packetId = 0x1FFF;
+	int initFlags = 0;
+
+	checkArguments(argc, argv);
 
 	zWindow = (unsigned char*) malloc(32 * 1024);
 	if (zWindow == NULL) {
@@ -337,7 +372,10 @@ int main(int argc, char**argv)
 	servaddr.sin_port = htons(32100);
 	bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
 
-	if (arvid_init() != 0) {
+	if (noServiceScreen) {
+		initFlags |= FLAG_NO_FB_CLEAR;
+	}
+	if (arvid_init_ex(initFlags) != 0) {
 		return -1;
 	}
 
@@ -345,20 +383,34 @@ int main(int argc, char**argv)
 	getIpAddress(&ipAddr);
 	printf("ip address = %s\n", ipAddr);
 
-	arvid_show_service_screen();
 	fb[0] = arvid_get_frame_buffer(0);
 	fb[1] = arvid_get_frame_buffer(1);
 
-	//draw ip address on screen
 
+	if (noServiceScreen == 0) {
+		arvid_show_service_screen();
+	}
+
+	//draw ip address on screen
 	if (ipAddr != NULL) {
+		int posX, posY;
 		int textW = strlen(ipAddr) * 8;
-		int posX = (arvid_get_width() - textW ) / 2;
-		int posY = arvid_get_height() - 48;
 		unsigned short color = COLOR(0x1F, 0x1F, 0x1F); //background color
-		fillRect(posX - 2, posY - 2, textW + 4, 12, color, 0);
-		fillRect(posX - 2, posY - 2, textW + 4, 12, color, 1);
-		paintString(ipAddr, posX, posY, COLOR(0xA0, 0x80, 0));
+		int rotate = arvid_get_button_state() & ARVID_TATE_SWITCH;
+		//draw background of the ip-address (to both frame buffers)
+		if (rotate) {
+			posX = 40;
+			posY = ((arvid_get_height() - textW) / 2);
+			fillRect(posX - 2, posY - 2, 12, textW + 4, color, 0);
+			fillRect(posX - 2, posY - 2, 12, textW + 4, color, 1);
+		} else {
+			posX = (arvid_get_width() - textW ) / 2;
+			posY = arvid_get_height() - 48;
+			fillRect(posX - 2, posY - 2, textW + 4, 12, color, 0);
+			fillRect(posX - 2, posY - 2, textW + 4, 12, color, 1);
+		}
+		//draw the ip address
+		paintString(ipAddr, posX, posY, COLOR(0xA0, 0x80, 0), rotate);
 	}
 
 

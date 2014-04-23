@@ -209,20 +209,22 @@ static int load_pru_code_(arvid_video_mode mode) {
 	return 0;
 }
 
-static void init_frame_buffer_(arvid_video_mode mode, int lines) {
+static void init_frame_buffer_(arvid_video_mode mode, int lines, int noFbClear) {
 	ap.lines = lines;
 	ap.fbWidth = arvid_resolution[mode];
 	ap.fbHeight = INITIAL_FB_H;
 	ap.fb[0] = (unsigned short*) &ap.ddrMem[16];
 	ap.fb[1] = (unsigned short*) &ap.ddrMem[16 + (0x100000 >> 2)];
 
-	//clean both frames with black color
-	arvid_fill_rect(0, 0, 12, ap.fbWidth, ap.lines, 0);
-	arvid_fill_rect(1, 0, 12, ap.fbWidth, ap.lines, 0);
+	if (noFbClear == 0) {
+		//clean both frames with black color
+		arvid_fill_rect(0, 0, 12, ap.fbWidth, ap.lines, 0);
+		arvid_fill_rect(1, 0, 12, ap.fbWidth, ap.lines, 0);
+	}
 }
 
 /* loads pru code, initializes memory  mappings etc */
-int arvid_init(void) {
+int arvid_init_ex(int initFlags) {
 	int res;
 
 	//check already initialized
@@ -246,7 +248,7 @@ int arvid_init(void) {
 		return res;
 	}
 
-	init_frame_buffer_(INITIAL_VIDEO_MODE, INITIAL_FB_LINES);
+	init_frame_buffer_(INITIAL_VIDEO_MODE, INITIAL_FB_LINES, initFlags & FLAG_NO_FB_CLEAR);
 
 	res = load_pru_code_(INITIAL_VIDEO_MODE);
 	if (res) {
@@ -256,6 +258,12 @@ int arvid_init(void) {
 	ap.initialized = 0xACCE5503;
 	return 0;
 }
+
+/* backward compatible init function */
+int arvid_init() {
+	return arvid_init_ex(0);
+}
+
 
 static int arvid_disable_pruss_(void) {
 	int error = 0;
@@ -445,7 +453,7 @@ int arvid_set_video_mode(arvid_video_mode mode, int lines) {
 	ap.ddrMem[0] = 0;
 
 	//clean frame buffer
-	init_frame_buffer_(mode, lines);
+	init_frame_buffer_(mode, lines, 0);
 
 	//arvidStartFrame_ = 0;
 
