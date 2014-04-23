@@ -42,12 +42,38 @@ IN THE PRODUCT.
 
 #define COLOR(r,g,b) (((r) >> 3) << 10) | (((g) >> 3) << 5) | ((b) >> 3)
 
+//PRU Data:
+//byte 0  - 63 : header: video mode registers and misc info (16 integers)
+//byte 64 - XX : frame buffer data - individal pixels of a single line
+//               in ARGB1555 format streamed from DDR
+
+//Frame buffer address index
+#define PRU_DATA_FB_ADDR 0
+
+//Frame sequential number
+#define PRU_DATA_FRAME_NUMBER 1
+
+//line length block count
+#define PRU_DATA_BLOCK_COUNT 2
+
+//number of lines to render
+#define PRU_DATA_TOTAL_LINES 3
+
+//gpio state - buttons
+#define PRU_DATA_GPIO_STATE 4
+
+//line length modifier - affects beam synchronistation
+#define PRU_DATA_LINE_SYNC_MOD 5
+
+//currently rendered line
+#define PRU_DATA_LINE_NUMBER 6
 
 typedef struct arvid_private_t {
 	unsigned int initialized;
 	unsigned int ddrAddress;
 	unsigned int* ddrMem;
-	unsigned int* pruMem;
+	volatile unsigned int* pruMem;
+	volatile unsigned int* pruSharedMem;
 	int ddrFd;
 
 	int lines;

@@ -10,7 +10,8 @@ OFILES := \
 		$(OUT)/libarvid.o \
 		$(OUT)/blitter.o \
 		$(OUT)/ser_screen.o \
-		$(OUT)/rates.o
+		$(OUT)/rates.o \
+		$(OUT)/frame_server.o
 
 ALL_TARGETS := \
 		init \

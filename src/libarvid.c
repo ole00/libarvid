@@ -37,6 +37,7 @@ IN THE PRODUCT.
 #include <arvid.h>
 #include "libarvid.h"
 #include "blitter.h"
+#include "frame_server.h"
 
 #define ARVID_BUTTON_MASK (ARVID_COIN_BUTTON | ARVID_TATE_SWITCH)
 
@@ -45,23 +46,6 @@ IN THE PRODUCT.
 //byte 64 - XX : frame buffer data - individal pixels of a single line
 //               in ARGB1555 format streamed from DDR
 
-//Frame buffer address index
-#define PRU_DATA_FB_ADDR 0
-
-//Frame sequential number
-#define PRU_DATA_FRAME_NUMBER 1
-
-//line length block count
-#define PRU_DATA_BLOCK_COUNT 2
-
-//number of lines to render
-#define PRU_DATA_TOTAL_LINES 3
-
-//gpio state - buttons
-#define PRU_DATA_GPIO_STATE 4
-
-//line length modifier - affects beam synchronistation
-#define PRU_DATA_LINE_SYNC_MOD 5
 
 //corresponds to videomodes
 static int arvid_resolution[] = {
@@ -75,6 +59,7 @@ static int arvid_resolution[] = {
 };
 
 arvid_private ap = {
+		0,
 		0,
 		0,
 		0,
@@ -113,9 +98,9 @@ static int get_uio_address_(int id) {
 
 /* initialize pruss */
 static int init_pruss_(void) {
-//	tpruss_intc_initdata intcInitData = PRUSS_INTC_INITDATA;
 	int res;
 	int i;
+	tpruss_intc_initdata intc = PRUSS_INTC_INITDATA;
 
 	//run modprobe
 	res = system("/sbin/modprobe uio_pruss  extram_pool_sz=0x400000");
@@ -151,11 +136,29 @@ static int init_pruss_(void) {
 		return ARVID_ERROR_PRU_INIT_FAILED;
 	}
 
+	//setup interrupt events
+
 	res = prussdrv_open(PRU_EVTOUT_0);
 	if (res) {
-		printf("arvid: prussdrv_open failed: %i\n", res);
+		printf("arvid: prussdrv_open 0 failed: %i\n", res);
 		return ARVID_ERROR_PRU_INIT_FAILED;
 	}
+
+	res = prussdrv_open(PRU_EVTOUT_1);
+	if (res) {
+		printf("arvid: prussdrv_open 1 failed: %i\n", res);
+		return ARVID_ERROR_PRU_INIT_FAILED;
+	}
+
+	//test
+
+	/* initialize interrupt */
+	res = prussdrv_pruintc_init(&intc);
+	if (res) {
+		printf("arvid: prussdrv_pruintc_init() failed: %i\n", res);
+		return res;
+	}
+	//test end
 
 	return 0;
 }
@@ -194,6 +197,10 @@ int init_memory_mapping_(void) {
 	//map internal pru memory 
 	prussdrv_map_prumem(PRUSS0_PRU1_DATARAM, &mem);
 	ap.pruMem = (unsigned int*) mem;
+
+	prussdrv_map_prumem(PRUSS0_SHARED_DATARAM, &mem);
+	ap.pruSharedMem = (unsigned int*) mem;
+	printf("shared mem=%p\n", ap.pruSharedMem);
 
 	//set video mode info to pru
 	setPruMem(INITIAL_FB_W, INITIAL_FB_LINES);
@@ -279,6 +286,13 @@ int arvid_init_ex(int initFlags) {
 	if (res) {
 		return res;
 	}
+
+	res = start_frame_thread();
+	if (res) {
+		printf("arvid: failed to start frame thread: %i\n", res);
+		return ARVID_ERROR_THREAD_FAILED;
+	}
+
 
 	ap.initialized = 0xACCE5503;
 	return 0;
@@ -471,6 +485,9 @@ int arvid_set_video_mode(arvid_video_mode mode, int lines) {
 		return ARVID_ERROR_ILLEGAL_VIDEO_MODE;
 	}
 
+	stop_frame_thread();
+	usleep(10*1000);
+
 	//set video mode info to pru
 	setPruMem(arvid_resolution[mode], lines);
 
@@ -482,7 +499,10 @@ int arvid_set_video_mode(arvid_video_mode mode, int lines) {
 
 	//arvidStartFrame_ = 0;
 
-	return load_pru_code_(mode);
+	//return 
+	load_pru_code_(mode);
+
+	return start_frame_thread();
 }
 
 unsigned int arvid_get_frame_number(void) {
