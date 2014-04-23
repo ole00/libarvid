@@ -1,3 +1,28 @@
+/*
+Arvid software and hardware is licensed under MIT license:
+
+Copyright (c) 2015 Marek Olejnik
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this hardware, software, and associated documentation files (the "Product"),
+to deal in the Product without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Product, and to permit persons to whom the Product is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Product.
+
+THE PRODUCT IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE PRODUCT OR THE USE OR OTHER DEALINGS
+IN THE PRODUCT.
+
+*/
+
 /* frame rate conversion tables*/
 #include "libarvid.h"
 
@@ -188,63 +213,64 @@ arvid_line_rate arvid_rate_table[4][RATE_SIZE] = {
 },
 
 {// mode 3 - 384 pixels width
-{304,  49.966667},
-{303,  50.133335},
-{302,  50.299999},
-{301,  50.450001},
-{300,  50.616665},
-{299,  50.783333},
-{298,  50.950001},
-{297,  51.116665},
-{296,  51.283333},
-{295,  51.450001},
-{294,  51.633335},
-{293,  51.799999},
-{292,  51.966667},
-{291,  52.150002},
-{290,  52.316666},
-{289,  52.500000},
-{288,  52.666668},
-{287,  52.849998},
-{286,  53.033333},
-{285,  53.216667},
-{284,  53.400002},
-{283,  53.583332},
-{282,  53.766666},
-{281,  53.950001},
-{280,  54.133335},
-{279,  54.316666},
-{278,  54.516666},
-{277,  54.700001},
-{276,  54.900002},
-{275,  55.099998},
-{274,  55.283333},
-{273,  55.483334},
-{272,  55.683334},
-{271,  55.883335},
-{270,  56.083332},
-{269,  56.283333},
-{268,  56.483334},
-{267,  56.700001},
-{266,  56.900002},
-{265,  57.116665},
-{264,  57.316666},
-{263,  57.533333},
-{262,  57.750000},
-{261,  57.966667},
-{260,  58.183334},
-{259,  58.400002},
-{258,  58.616665},
-{257,  58.833332},
-{256,  59.049999},
-{255,  59.283333},
-{254,  59.516666},
-{253,  59.733334},
-{252,  59.966667},
-{251,  60.200001},
-{250,  60.433334},
-{249,  60.666668},
-{248,  60.900002},
+
+{304,  50.000000},
+{303,  50.166668},
+{302,  50.316666},
+{301,  50.483334},
+{300,  50.650002},
+{299,  50.816666},
+{298,  50.983334},
+{297,  51.150002},
+{296,  51.316666},
+{295,  51.483334},
+{294,  51.650002},
+{293,  51.833332},
+{292,  52.000000},
+{291,  52.166668},
+{290,  52.349998},
+{289,  52.516666},
+{288,  52.700001},
+{287,  52.883335},
+{286,  53.066666},
+{285,  53.233334},
+{284,  53.416668},
+{283,  53.599998},
+{282,  53.799999},
+{281,  53.983334},
+{280,  54.166668},
+{279,  54.349998},
+{278,  54.549999},
+{277,  54.733334},
+{276,  54.933334},
+{275,  55.116665},
+{274,  55.316666},
+{273,  55.516666},
+{272,  55.716667},
+{271,  55.916668},
+{270,  56.116665},
+{269,  56.316666},
+{268,  56.516666},
+{267,  56.733334},
+{266,  56.933334},
+{265,  57.150002},
+{264,  57.349998},
+{263,  57.566666},
+{262,  57.783333},
+{261,  58.000000},
+{260,  58.216667},
+{259,  58.433334},
+{258,  58.650002},
+{257,  58.866665},
+{256,  59.083332},
+{255,  59.316666},
+{254,  59.549999},
+{253,  59.766666},
+{252,  60.000000},
+{251,  60.233334},
+{250,  60.466667},
+{249,  60.700001},
+{248,  60.933334},
 
 },
 

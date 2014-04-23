@@ -1,3 +1,28 @@
+//
+// Arvid software and hardware is licensed under MIT license:
+//
+// Copyright (c) 2015 Marek Olejnik
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this hardware, software, and associated documentation files (the "Product"),
+// to deal in the Product without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Product, and to permit persons to whom the Product is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Product.
+//
+// THE PRODUCT IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE PRODUCT OR THE USE OR OTHER DEALINGS
+// IN THE PRODUCT.
+
+
+
 
 #include "utils.p"
 
@@ -224,9 +249,13 @@ pixel_line_pixel_delay:
 	NOP
 	NOP
 	qbne pixel_line_pixel_delay, r0.w2, 0
+
 	NOP
+//odd pixels are slightly wider
+	qbbs pixel_short, r0, 0
 	NOP
-//	NOP
+
+pixel_short:
 
 	//8 active cycles + 14 passive cycles = 22 cycles in total for 1 pixel
 
@@ -270,7 +299,7 @@ send_pulse_continue:
 
 //final delay - 320 cycles (to compensate slightly shorter pixels)
 
-	mov r0.w2, 190								// delay 1 c 79, 87
+	mov r0.w2, 91								// delay 1 c 79, 87
 pixel_line_final_delay:
 	sub r0.w2, r0.w2, 1
 	NOP
@@ -280,9 +309,12 @@ pixel_line_final_delay:
 	NOP
 	NOP
 
-//	NOP
-//	NOP
-//	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
 
 
 	RETURN						// return to saved address

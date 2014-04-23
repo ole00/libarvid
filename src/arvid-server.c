@@ -1,3 +1,27 @@
+/*
+Arvid software and hardware is licensed under MIT license:
+
+Copyright (c) 2015 Marek Olejnik
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this hardware, software, and associated documentation files (the "Product"),
+to deal in the Product without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Product, and to permit persons to whom the Product is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Product.
+
+THE PRODUCT IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE PRODUCT OR THE USE OR OTHER DEALINGS
+IN THE PRODUCT.
+
+*/
 
 /* Arvic UDP server */
 #include <stdlib.h>
@@ -5,17 +29,155 @@
 #include <netinet/in.h>
 #include <stdio.h>
 #include <memory.h>
+#include <arpa/inet.h>
+#include <ifaddrs.h>
 
 #include "zlib.h"
 #include "arvid.h"
 
+
+
+
+//8 x 8 tiles
+static unsigned char tiles[][64] = {
+		//digit 0
+		{
+				0, 3, 3, 3, 3, 3, 0, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				0, 3, 3, 3, 3, 3, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+		},
+		//digit 1
+		{
+				0, 0, 0, 0, 3, 0, 0, 0,
+				0, 0, 0, 3, 3, 0, 0, 0,
+				0, 0, 3, 3, 3, 0, 0, 0,
+				0, 0, 0, 3, 3, 0, 0, 0,
+				0, 0, 0, 3, 3, 0, 0, 0,
+				0, 0, 0, 3, 3, 0, 0, 0,
+				0, 0, 3, 3, 3, 3, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+		},
+		//digit 2
+		{
+				0, 3, 3, 3, 3, 3, 0, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				0, 0, 0, 0, 0, 3, 3, 0,
+				0, 3, 3, 3, 3, 3, 0, 0,
+				3, 3, 0, 0, 0, 0, 0, 0,
+				3, 3, 0, 0, 0, 0, 0, 0,
+				3, 3, 3, 3, 3, 3, 3, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+		},
+		//digit 3
+		{
+				0, 3, 3, 3, 3, 3, 0, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				0, 0, 0, 0, 0, 3, 3, 0,
+				0, 0, 0, 3, 3, 3, 0, 0,
+				0, 0, 0, 0, 0, 3, 3, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				0, 3, 3, 3, 3, 3, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+		},
+		//digit 4
+		{
+				0, 0, 0, 3, 3, 3, 3, 0,
+				0, 0, 3, 3, 0, 3, 3, 0,
+				0, 3, 3, 0, 0, 3, 3, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				3, 3, 3, 3, 3, 3, 3, 0,
+				0, 0, 0, 0, 0, 3, 3, 0,
+				0, 0, 0, 0, 0, 3, 3, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+		},
+		//digit 5
+		{
+				3, 3, 3, 3, 3, 3, 3, 0,
+				3, 3, 0, 0, 0, 0, 0, 0,
+				3, 3, 0, 0, 0, 0, 0, 0,
+				0, 3, 3, 3, 3, 3, 0, 0,
+				0, 0, 0, 0, 0, 3, 3, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				0, 3, 3, 3, 3, 3, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+
+		},
+		//digit 6
+		{
+				0, 3, 3, 3, 3, 3, 0, 0,
+				3, 3, 0, 0, 0, 0, 0, 0,
+				3, 3, 0, 0, 0, 0, 0, 0,
+				3, 3, 3, 3, 3, 3, 0, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				0, 3, 3, 3, 3, 3, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+
+		},
+		//digit 7
+		{
+				3, 3, 3, 3, 3, 3, 3, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				0, 0, 0, 0, 3, 3, 0, 0,
+				0, 0, 0, 3, 3, 0, 0, 0,
+				0, 0, 0, 3, 3, 0, 0, 0,
+				0, 0, 0, 3, 3, 0, 0, 0,
+				0, 0, 0, 3, 3, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+		},
+		//digit 8
+		{
+				0, 3, 3, 3, 3, 3, 0, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				0, 3, 3, 3, 3, 3, 0, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				0, 3, 3, 3, 3, 3, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+
+		},
+		//digit 9
+		{
+				0, 3, 3, 3, 3, 3, 0, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				3, 3, 0, 0, 0, 3, 3, 0,
+				0, 3, 3, 3, 3, 3, 3, 0,
+				0, 0, 0, 0, 0, 3, 3, 0,
+				0, 0, 0, 0, 0, 3, 3, 0,
+				0, 3, 3, 3, 3, 3, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+
+		},
+		//dot character
+		{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 3, 3, 0, 0, 0,
+				0, 0, 0, 3, 3, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+
+		},
+
+};
+
+unsigned short* fb[2];
 
 unsigned char* zSrcData;
 unsigned int zSrcSize;
 unsigned short* zDstData;
 
 unsigned int inflate_in(void* descriptor, unsigned char** buffer) {
-	buffer = &zSrcData;
+	printf("in called!\n");
+	*buffer = zSrcData;
 	return zSrcSize;
 }
 
@@ -25,17 +187,93 @@ int inflate_out(void* descriptor, unsigned char* buffer, unsigned int size) {
 	return 0;
 }
 
+static void getIpAddress(char** result) {
+	struct ifaddrs* addr;
+	struct ifaddrs* root = NULL;
+
+	getifaddrs(&root);
+	addr = root;
+
+	while (addr != NULL) {
+		if (
+			addr->ifa_addr != NULL && 
+			addr->ifa_addr->sa_family == AF_INET && 
+			strncmp("eth0", addr->ifa_name, 4) == 0) 
+		{
+			struct sockaddr_in* inetAddr = (struct sockaddr_in*) addr->ifa_addr;
+			*result = inet_ntoa(inetAddr->sin_addr);
+			break;
+		}
+		addr = addr->ifa_next;
+	}
+
+	if (root != NULL) {
+		freeifaddrs(root);
+	}
+}
+
+static void fillRect(int x, int y,int w, int h, unsigned short color, int frameIndex) {
+	int j, i;
+	unsigned short* ptr = fb[frameIndex];
+	int maxW = arvid_get_width();
+
+	ptr += maxW * y + x;
+
+	for (j = 0; j < h; j++) {
+		for (i = 0; i < w; i++) {
+			ptr[i] = color;
+		}
+		ptr += maxW;
+	}
+}
+
+static void paintTile(int x, int  y, int tileIndex, unsigned short color, int frameIndex) {
+	int  j, i;
+	unsigned short* ptr = fb[frameIndex];
+	unsigned char* src = tiles[tileIndex];
+	int maxW = arvid_get_width();
+
+	ptr += maxW * y + x;
+
+	for (j = 0; j < 8; j++) {
+		for (i = 0; i < 8; i++) {
+			if (src[i]) {
+				ptr[i] = color;
+			}
+		}
+		src += 8;
+		ptr += maxW;
+	}
+}
+
+//naive number painting
+static void paintString(char* text, int x, int y,unsigned short color) {
+	while (*text != 0) {
+		char c = *text;
+		int index = c - '0';
+		if (c == '.') {
+			index = 10;
+		}
+
+		if (index >= 0 && index <= 10) {
+			paintTile(x, y, index, color, 0);
+			paintTile(x, y, index, color, 1);
+			x += 8;
+		}
+		text++;
+	}
+}
 
 int main(int argc, char**argv)
 {
 	int sockfd;
 	struct sockaddr_in servaddr,cliaddr;
 	socklen_t len;
-	unsigned short data[8 + 4 * 1024];
-	unsigned short* fb[2];
+	unsigned short data[8 + 16 * 1024];
 	int totalSize = sizeof(data);
 	z_stream zStream;
 	unsigned char* zWindow;
+	char* ipAddr = NULL;
 
 	zWindow = (unsigned char*) malloc(32 * 1024);
 	if (zWindow == NULL) {
@@ -60,10 +298,28 @@ int main(int argc, char**argv)
 	if (arvid_init() != 0) {
 		return -1;
 	}
+
+
+	getIpAddress(&ipAddr);
+	printf("ip address = %s\n", ipAddr);
+
+	arvid_show_service_screen();
 	fb[0] = arvid_get_frame_buffer(0);
 	fb[1] = arvid_get_frame_buffer(1);
 
-	arvid_show_service_screen();
+	//draw ip address on screen
+
+	if (ipAddr != NULL) {
+		int textW = strlen(ipAddr) * 8;
+		int posX = (arvid_get_width() - textW ) / 2;
+		int posY = arvid_get_height() - 48;
+		unsigned short color = 0x111; //background color
+		fillRect(posX - 2, posY - 2, textW + 4, 12, color, 0);
+		fillRect(posX - 2, posY - 2, textW + 4, 12, color, 1);
+		paintString(ipAddr, posX, posY, 0xA80);
+	}
+
+
 	len = sizeof(cliaddr);
 
 	while(1)
@@ -81,7 +337,6 @@ int main(int argc, char**argv)
 					unsigned short* dst = fb[bufferIndex] + (y * width);
 					uLongf chunkSize = (32 * width) << 1;
 					zSrcSize = size;
-
 
 					zStream.avail_in = size;
 					zStream.next_in = (void*) &data[8];
@@ -140,7 +395,8 @@ int main(int argc, char**argv)
 					*result = arvid_init();
 					sendto(sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
 					//set cpu freq to stable frequency
-					system("cpufreq-set -f 800MHz");
+					//system("cpufreq-set -f 800MHz");
+					system("cpufreq-set -f 1000MHz");
 				}; break;
 
 			case 12: // close

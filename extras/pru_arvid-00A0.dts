@@ -1,0 +1,79 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "ti,beaglebone", "ti,beaglebone-black";
+	part-number = "pru_arvid";
+	version = "00A0";
+
+	/* Define pins and resources this config sets up. */
+	/* pin numbers on header P8 or P9 */
+
+	exclusive-use = 
+	"P8.45", /* PRU1_0 */
+	"P8.46", /* PRU1_1 */
+	"P8.43", /* PRU1_2 */
+	"P8.44", /* PRU1_3 */
+	"P8.41", /* PRU1_4 */
+	"P8.42", /* PRU1_5 */
+	"P8.39", /* PRU1_6 */
+	"p8.40", /* PRU1_7 */
+	"p8.27", /* PRU1_8 */
+	"p8.29", /* PRU1_9 */
+	"p8.28", /* PRU1_10 */
+	"p8.30", /* PRU1_11 */
+
+	"p8.26", /* GPIO_61 or aka GPIO1_29  - sync */
+
+	"pru1" ; /* PRU unit 1 */
+
+	
+
+	fragment@0 {
+		target = <&am33xx_pinmux>;
+
+		__overlay__ {
+			status = "okay";
+
+			pru_test_pins: pinmux_pru_test_pins {
+				/* PRU Low latency IO */
+				pinctrl-single,pins = <
+					0x0A0 0x45  /* P8.45 PRU1_0, mode 5 -> output */
+					0x0A4 0x45  /* P8.46 PRU1_1, mode 5 -> output */
+					0x0A8 0x45  /* P8.43 PRU1_2, mode 5 -> output */
+					0x0AC 0x45  /* P8.44 PRU1_3, mode 5 -> output */
+
+					0x0B0 0x45  /* P8.41 PRU1_4, mode 5 -> output */
+					0x0B4 0x45  /* P8.42 PRU1_5, mode 5 -> output */
+					0x0B8 0x45  /* P8.39 PRU1_6, mode 5 -> output */
+					0x0BC 0x45  /* P8.40 PRU1_7, mode 5 -> output */
+
+					0x0E0 0x45  /* P8.27 PRU1_8, mode 5 -> output */
+					0x0E4 0x45  /* P8.29 PRU1_9, mode 5 -> output */
+					0x0E8 0x45  /* P8.28 PRU1_10, mode 5 -> output */
+					0x0EC 0x45  /* P8.30 PRU1_11, mode 5 -> output */
+
+					0x07C 0x07  /* P8.26 GPIO1_29, mode 7 */
+
+				>;
+			};
+
+		};
+	};
+
+	fragment@1 {
+		target = <&pruss>;
+		__overlay__ {
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&pru_test_pins>;
+			enabled = <1>;
+
+			hv_sync {
+				pin-names = "Arvid:hv_sync";
+				gpios = <&gpio2 29 0>;
+			};
+		};
+	};
+
+};
