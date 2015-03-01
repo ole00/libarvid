@@ -43,6 +43,7 @@ This example:
 int main(int argc , char** argv) {
 	int res;
 	int lines;
+	int buttons;
 
 	//default video mode is PAL 320x240, 50 Hz,  304 total lines
 	res = arvid_init();
@@ -72,6 +73,12 @@ int main(int argc , char** argv) {
 		usleep(10 *1000000);
 	}
 
+	buttons = arvid_get_button_state();
+	printf("buttons: coin=%i start=%i tate=%i\n",
+	    buttons & ARVID_COIN_BUTTON ? 1 : 0,
+	    buttons & ARVID_START_BUTTON ? 1 : 0,
+	    buttons & ARVID_TATE_SWITCH ? 1 : 0
+	);
 
 	res = arvid_close();
 	printf("example: arvid_close result=%i\n", res);

@@ -49,6 +49,7 @@ IN THE PRODUCT.
 
 #define ARVID_TATE_SWITCH (1 << 19)
 #define ARVID_COIN_BUTTON (1 << 17)
+#define ARVID_START_BUTTON (1 << 21)
 
 #define FLAG_NO_FB_CLEAR (1 << 0)
 

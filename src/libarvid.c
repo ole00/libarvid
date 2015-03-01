@@ -40,7 +40,7 @@ IN THE PRODUCT.
 #include "blitter.h"
 #include "frame_server.h"
 
-#define ARVID_BUTTON_MASK (ARVID_COIN_BUTTON | ARVID_TATE_SWITCH)
+#define ARVID_BUTTON_MASK (ARVID_START_BUTTON | ARVID_COIN_BUTTON | ARVID_TATE_SWITCH)
 
 //PRU Data:
 //byte 0  - 63 : header: video mode registers and misc info (16 integers)
