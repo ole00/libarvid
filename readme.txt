@@ -26,6 +26,13 @@ notes:
 - pru binary code (prustream.bin, pruvideo_XXX.bin) have to exist in
   current working directory of an application that uses/links libarvid
 
+
+-------------
+Ver 0.3e
+- added support for Start button on pin P9_25. When connected to ground
+  arvid_get_button_state() will report the Start button is pressed.
+  Make sure to copy the latest *.dtbo to /lib/firmware!
+- removed the old 12-bit dts files (these were obsolete long time ago)
 -------------
 Ver 0.3d
 - new video mode 292
