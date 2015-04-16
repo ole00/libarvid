@@ -1,0 +1,7 @@
+*.o
+*.bin
+*.a
+arvid-server
+framerate_test
+simple_test
+
