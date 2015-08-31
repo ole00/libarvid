@@ -26,8 +26,6 @@
 
 #include "utils.p"
 
-#define GPIO_OUT r30
-
 #define PULSE_CYCLES 56
 
 #define VIDEO_0 0
@@ -40,12 +38,22 @@
 #define PIXEL_COLOR r11
 
 #define GPIO1		0x4804c000
+#define GPIO2		0x481ac000
+
+//address to set individual bit on GPIO register
 #define GPIO_SET	0x194
+
+//address to clear individual bit on GPIO register
 #define GPIO_CLR	0x190
+
+//address to set and clear all bits on GPIO register
+#define GPIO_DATAOUT 0x13c
 
 #define SYNC_HI		r7
 #define SYNC_LO		r8
 #define SYNC_BIT	r9
+#define GPIO_OUT_ADDR  r12
+#define GPIO_OUT_CLEAR r13
 
 #define TOTAL_LINES  r3
 
@@ -73,8 +81,20 @@ Start:
 
 //setup sync data
 	mov SYNC_BIT, 1 << 29 //GPIO1_29
+
+//sync_lo is now address to CLEAR individual bits on GPIO
 	mov SYNC_LO, GPIO1 | GPIO_CLR
+
+//sync_hi is now address to SET individual bits on GPIO
 	mov SYNC_HI, GPIO1 | GPIO_SET
+
+//set up the gpio2 slow address. By writing to this address
+//all GPIOs bits will be set and unset all at once
+	mov GPIO_OUT_ADDR, GPIO2 | GPIO_DATAOUT
+
+	mov GPIO_OUT_CLEAR, 0
+
+
 
 // read DDR address into r4 from the data ram
 // the addres was set up by the host program
@@ -116,6 +136,24 @@ Start:
 // has finished rendering
 	mov r1, 0;
 	sbbo r1, r0, 0, 4
+
+// =============================================================
+// INFO
+// =============================================================
+// you will see a lot of comments saying: comps. 1st c etc.
+// That means: compensate 1st cycle, 2nd cycle etc.
+// Explanation:
+// We have to send synchronisation pulses at the beginning
+// and end of the pixel line. These pulses have to be exactly the
+// same length. But because we do some data setting and calls
+// before actually doing the pulse, the pulse time might not
+// be exactly the same length as other pulses. So in order to 
+// ensure same pulse length we wait exactly 3 cycles before
+// starting each pulse. The 'wait' of 3 cycles can be any 
+// combination of instructions that together take 3 processor
+// cycles - either NOP or MOV etc. PRUs usually execute
+// 1 instruction in 1 cycle. Only memory access takes 4 cycles
+// =============================================================
 
 // =============================================================
 // Frame start
@@ -182,8 +220,8 @@ PixelLine:
 	NOP								// comps. 3rd cycle
 
 	// 8us of HI sync signal (2us + 3x 2us)
-
-	sbbo SYNC_BIT, SYNC_HI, 0, 4	// send HI sync signal, comps. 1st c
+	//!!! SBBO 0,4 might take 4 cycles instead of 1 !!!!
+	sbbo SYNC_BIT, SYNC_HI, 0, 4	// send HI sync signal, comps. 1st c !!! VERIFY number of cycles for SBBO!!!
 
     call Pulse						// wait 2us (1st HI sync signal)
 	NOP								// comps. 2nd cycle
@@ -219,8 +257,8 @@ pixel_line_sync_loop:
 
 
 	//Pulse 1 - black color
-	mov GPIO_OUT, 0					// send BLACK signal, comps. 1st c
     call Pulse						// wait 2us
+	NOP								// comps. 1st cycle
 	NOP								// comps. 2nd cycle
 	NOP								// comps. 3rd cycle
 
@@ -233,8 +271,11 @@ pixel_line_pixel_loop:
 	//read pixel
 	lbbo PIXEL_COLOR, PIXEL_BUFFER, 0, 2 		// ? 3 or 4  cycles
 
-	//output pixel to GPIO pins
-    mov GPIO_OUT, PIXEL_COLOR					// ? 1 cycle, total 5 c
+	//gpio2_0 pin doesn't exist on BBB, so we have to
+	//shift the pixel color value left by 1 bit to start at gpio2_1 pin.
+	lsl  PIXEL_COLOR, PIXEL_COLOR, 1
+
+	sbbo PIXEL_COLOR, GPIO_OUT_ADDR, 0, 2
 
 	//jump to next pixel (increase memory addr by 2 bytes)
 	add PIXEL_BUFFER, PIXEL_BUFFER, 2			// ? 1 cycle, total 6 c
@@ -250,8 +291,8 @@ pixel_line_pixel_delay:
 	NOP
 	qbne pixel_line_pixel_delay, r0.w2, 0
 	NOP
-	NOP
-	NOP
+//	NOP
+//	NOP
 
 	//8 active cycles + 20 passive cycles = 30 cycles in total for 1 pixel
 
@@ -273,6 +314,9 @@ send_sync_pulse_2:
 send_pulse_continue:
 	sbbo r1, r0, 0, 4
 
+//  send BLACK to GPIO port (clear colors)
+	sbbo GPIO_OUT_CLEAR, GPIO_OUT_ADDR, 0, 2
+
 // Final 2 Black pulses (bars)
 // Instead of these 2 black pulses we could do something clever.
 // For example set different palette for the next line (copper effects anyone ? :)
@@ -282,14 +326,14 @@ send_pulse_continue:
 // the black (or background) color has to be set, then total time of 4us must be kept.
 
 	//Pulse 25
-	mov GPIO_OUT, 0					// send BLACK signal, comps. 1st c
     call Pulse						// wait 2us
+	NOP								// comps. 1st cycle
 	NOP								// comps. 2nd cycle
 	NOP								// comps. 3rd cycle
 
 	//Pulse 26
-	mov GPIO_OUT, 0					// send BLACK signal, comps. 1st c
     call Pulse						// wait 2us
+	NOP								// comps. 1st cycle
 	NOP								// comps. 2nd cycle
 	NOP								// comps. 3rd cycle
 

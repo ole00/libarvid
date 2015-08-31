@@ -17,10 +17,13 @@ ALL_TARGETS := \
 		simple_test \
 		framerate_test \
 		arvid-server \
+		pruvideo_240.bin \
 		pruvideo_256.bin \
 		pruvideo_320.bin \
 		pruvideo_288.bin \
 		pruvideo_384.bin \
+		pruvideo_392.bin \
+		pruvideo_400.bin \
 		prustream.bin
 
 

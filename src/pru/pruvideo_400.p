@@ -88,11 +88,13 @@ Start:
 //sync_hi is now address to SET individual bits on GPIO
 	mov SYNC_HI, GPIO1 | GPIO_SET
 
-//set up the gpio2 out address. By writing to this address
-//all GPIOs bits on port 2 will be set and unset all at once
+//set up the gpio2 slow address. By writing to this address
+//all GPIOs bits will be set and unset all at once
 	mov GPIO_OUT_ADDR, GPIO2 | GPIO_DATAOUT
 
 	mov GPIO_OUT_CLEAR, 0
+
+
 
 // read DDR address into r4 from the data ram
 // the addres was set up by the host program
@@ -218,9 +220,8 @@ PixelLine:
 	NOP								// comps. 3rd cycle
 
 	// 8us of HI sync signal (2us + 3x 2us)
-
 	//!!! SBBO 0,4 might take 4 cycles instead of 1 !!!!
-	sbbo SYNC_BIT, SYNC_HI, 0, 4    // send HI sync signal, comps. 1st c !!! VERIFY number of cycles for SBBO!!!
+	sbbo SYNC_BIT, SYNC_HI, 0, 4	// send HI sync signal, comps. 1st c !!! VERIFY number of cycles for SBBO!!!
 
     call Pulse						// wait 2us (1st HI sync signal)
 	NOP								// comps. 2nd cycle
@@ -263,8 +264,8 @@ pixel_line_sync_loop:
 
 	//Pulse 2 to 24 ->draw real pixels
 
-	//draw 384 pixels
-	mov r0.w0, 384;
+	//draw 400 pixels
+	mov r0.w0, 400;
 
 pixel_line_pixel_loop:
 	//read pixel
@@ -274,7 +275,6 @@ pixel_line_pixel_loop:
 	//shift the pixel color value left by 1 bit to start at gpio2_1 pin.
 	lsl  PIXEL_COLOR, PIXEL_COLOR, 1
 
-	//output pixel to GPIO pins
 	sbbo PIXEL_COLOR, GPIO_OUT_ADDR, 0, 2
 
 	//jump to next pixel (increase memory addr by 2 bytes)
@@ -283,25 +283,19 @@ pixel_line_pixel_loop:
 	//reduce number of pixel left to draw
 	sub r0.w0, r0.w0, 1							// ? 1 cycle. total 7 c
 
-	//wait 11 passive cycles
-	mov r0.w2, 2								// delay 1 c , total 8 c
+	//wait 19 passive cycles
+	mov r0.w2, 3								// delay 1 c , total 8 c
 pixel_line_pixel_delay:
 	sub r0.w2, r0.w2, 1
 	NOP
 	NOP
 	qbne pixel_line_pixel_delay, r0.w2, 0
+//	NOP
+//	NOP
+//	NOP
+//	NOP
 
-	NOP
-	NOP
-	NOP
-
-//odd pixels are slightly wider
-	qbbs pixel_short, r0, 0
-	NOP
-
-pixel_short:
-
-	//8 active cycles + 14 passive cycles = 22 cycles in total for 1 pixel
+	//8 active cycles + 20 passive cycles = 30 cycles in total for 1 pixel
 
 	// check all pixels were drawn 
 	qbne pixel_line_pixel_loop, r0.w0 , 0 		// ? 1 cycle. total 6 c
@@ -323,7 +317,6 @@ send_pulse_continue:
 
 //  send BLACK to GPIO port (clear colors)
 	sbbo GPIO_OUT_CLEAR, GPIO_OUT_ADDR, 0, 2
-
 
 // Final 2 Black pulses (bars)
 // Instead of these 2 black pulses we could do something clever.
@@ -347,9 +340,11 @@ send_pulse_continue:
 
 //final delay - 320 cycles (to compensate slightly shorter pixels)
 
-	mov r0.w2, 91								// delay 1 c 79, 87
+	mov r0.w2, 66								// delay 1 c 79, 87
 pixel_line_final_delay:
 	sub r0.w2, r0.w2, 1
+	NOP
+	NOP
 	NOP
 	NOP
 	qbne pixel_line_final_delay, r0.w2, 0
@@ -358,11 +353,8 @@ pixel_line_final_delay:
 	NOP
 
 	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
+//	NOP
+//	NOP
 
 
 	RETURN						// return to saved address

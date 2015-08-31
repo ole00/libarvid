@@ -67,13 +67,15 @@ static const struct {
 }
 };
 
+
+
 int arvid_show_service_screen(void) {
 	unsigned short* fb;
 	unsigned short* framePtr;
 	int topLine;
-	const unsigned short grayBright = 0x777;
-	const unsigned short grayDark = 0x333;
-	const unsigned short borderColor = 0x722;
+	const unsigned short grayBright = COLOR(0x7F, 0x7F, 0x7F);
+	const unsigned short grayDark = COLOR(0x3F, 0x3F, 0x3F);
+	const unsigned short borderColor = COLOR(0x7F, 0x2F, 0x2f);
 	int i, j;
 	int posX, posY;
 	int index;
@@ -108,11 +110,11 @@ int arvid_show_service_screen(void) {
 	posX = (ap.fbWidth - (32 * 4)) / 2 ;
 	posX = (posX >> 3) << 3; //make it 8 pixel boundary
 	posY = 64 + topLine;
-	for (i = 0; i < 16; i++) {
-		arvid_fill_rect(0, posX,      posY + (i * 8), 32, 8, i << 8); // red
-		arvid_fill_rect(0, posX + 32, posY + (i * 8), 32, 8, i << 4); // green
-		arvid_fill_rect(0, posX + 64, posY + (i * 8), 32, 8, i ); // blue
-		arvid_fill_rect(0, posX + 96, posY + (i * 8), 32, 8, (i << 8) | (i << 4) | i); // red
+	for (i = 0; i < 32; i++) {
+		arvid_fill_rect(0, posX,      posY + (i * 4), 32, 4, COLOR(i << 3, 0, 0)); // red
+		arvid_fill_rect(0, posX + 32, posY + (i * 4), 32, 4, COLOR(0, i << 3, 0)); // green
+		arvid_fill_rect(0, posX + 64, posY + (i * 4), 32, 4, COLOR(0, 0, i << 3)); // blue
+		arvid_fill_rect(0, posX + 96, posY + (i * 4), 32, 4, (i << 10) | (i << 5) | i); // red
 	}
 
 	//higlight borders - top and bottom
@@ -143,9 +145,9 @@ int arvid_show_service_screen(void) {
 		framePtr = &fb[ap.fbWidth * (j + posY + topLine)];
 		framePtr+= posX;
 		for (i = 0; i < arvid_logo.width; i++) {
-			int c = arvid_logo.pixel_data[index++];
+			unsigned short c = arvid_logo.pixel_data[index++] << 4;
 			if (c) {
-				framePtr[i] = (unsigned short) ((c << 8) | (c << 4) | c);
+				framePtr[i] = (unsigned short) COLOR(c,c,c);
 			}
 		}
 	}

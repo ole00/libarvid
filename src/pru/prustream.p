@@ -34,6 +34,7 @@
 #define FRAME_BUFFER_2 r25
 #define FRAME_NUM  r26
 #define BLOCK_COUNT r3
+// r2 is unused
 
 #define STATE	r4
 #define STATE_ADDR 			0x10000
@@ -73,6 +74,9 @@ init_sync:
 	mov r0, BLOCK_COUNT_ADDR
 	lbbo BLOCK_COUNT, r0, 0, 4
 
+// note: top 16 bits of BLOCK_COUNT contain
+// frame buffer address shift!
+
 //set up frame index
 	mov FRAME_NUM, 0
 
@@ -106,7 +110,13 @@ streaming:
 	//we will read 64 bytes at once (16 registers, 32 pixels)
 
 	mov PIXEL_ADDR, PIXEL_ADDR_START
-	mov r0, BLOCK_COUNT 		// cout 10 * 64 = 640 bytes =>320 pixels (2 bytes per pixel)
+
+
+// note: top 16 bits of BLOCK_COUNT contain
+// frame buffer address shift!
+
+// use bottom 16 bits only
+	mov r0, BLOCK_COUNT.w0 		// count 10 * 32 = 640 bytes =>320 pixels (2 bytes per pixel)
 
 
 copy_line:
@@ -118,6 +128,10 @@ copy_line:
 	sub r0, r0, 1						//decrease pixel block count
 
 	qbne copy_line, r0, 0				//copy until the end of line
+
+	//subtract extra bytes from pixel buffer address if the frame buffer
+	//width is not multiply of 32 pixels (64 bytes). Use top 16 bits of the BLOCK_COUNT.
+	sub PIXEL_BUFFER, PIXEL_BUFFER, BLOCK_COUNT.w2
 
 	//reset destination address
 	mov PIXEL_ADDR, PIXEL_ADDR_START
@@ -138,6 +152,6 @@ line_sync:
 
 	qbeq streaming_start, STATE, 2		//state is 2 - start over new frame
 
-	mov r0, BLOCK_COUNT
+	mov r0, BLOCK_COUNT.w0
 	qba copy_line					//copy next line
 

@@ -56,6 +56,7 @@
 #define GPIO_OUT_CLEAR r13
 
 #define TOTAL_LINES  r3
+#define PIXEL_CNT r4
 
 // ****************************************
 // Program start
@@ -110,6 +111,8 @@ Start:
 // write frame buffer address to shared memory
 	mov r0, 0x10004
 	sbbo FRAME_BUFFER, r0, 0, 4
+
+	mov PIXEL_CNT, 0
 
 //send initial sync to PRU0
 	mov r0, 0x10000
@@ -264,7 +267,7 @@ pixel_line_sync_loop:
 	//Pulse 2 to 24 ->draw real pixels
 
 	//draw 384 pixels
-	mov r0.w0, 384;
+	mov r0.w0, 392;
 
 pixel_line_pixel_loop:
 	//read pixel
@@ -293,11 +296,12 @@ pixel_line_pixel_delay:
 
 	NOP
 	NOP
-	NOP
 
-//odd pixels are slightly wider
-	qbbs pixel_short, r0, 0
-	NOP
+	add PIXEL_CNT, PIXEL_CNT, 1
+
+//every 3rd pixel is slightly wider
+	qbne pixel_short, PIXEL_CNT, 3
+	mov PIXEL_CNT, 0
 
 pixel_short:
 
@@ -347,7 +351,7 @@ send_pulse_continue:
 
 //final delay - 320 cycles (to compensate slightly shorter pixels)
 
-	mov r0.w2, 91								// delay 1 c 79, 87
+	mov r0.w2, 78								// delay 1 c 79, 87
 pixel_line_final_delay:
 	sub r0.w2, r0.w2, 1
 	NOP
@@ -357,12 +361,10 @@ pixel_line_final_delay:
 	NOP
 	NOP
 
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
+
+
+//reset pixel cnt for the next line
+	mov PIXEL_CNT, 0
 
 
 	RETURN						// return to saved address

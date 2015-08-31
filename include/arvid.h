@@ -49,6 +49,9 @@ typedef enum  {
 	arvid_256,
 	arvid_288,
 	arvid_384,
+	arvid_240,
+	arvid_392,
+	arvid_400,
 	arvid_last_video_mode
 } arvid_video_mode;
 

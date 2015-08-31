@@ -29,15 +29,17 @@ IN THE PRODUCT.
 
 
 //internal for arvid
-#define INITIAL_VIDEO_MODE arvid_384
-#define INITIAL_FB_W  384
+#define INITIAL_VIDEO_MODE arvid_392
+#define INITIAL_FB_W  392
 #define INITIAL_FB_H  240
 #define INITIAL_FB_LINES 304
+
 
 #define RATE_SIZE 57
 
 #define ARVID_INIT_CHECK if (ap.initialized != 0xACCE5503) return ARVID_ERROR_NOT_INITIALIZED
 
+#define COLOR(r,g,b) (((r) >> 3) << 10) | (((g) >> 3) << 5) | ((b) >> 3)
 
 
 typedef struct arvid_private_t {

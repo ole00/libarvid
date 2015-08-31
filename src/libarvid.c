@@ -45,6 +45,9 @@ static int arvid_resolution[] = {
 	256,
 	288,
 	384,
+	240,
+	392,
+	400,
 };
 
 arvid_private ap = {
@@ -56,7 +59,7 @@ arvid_private ap = {
 };
 
 
-extern arvid_line_rate arvid_rate_table[4][RATE_SIZE];
+extern arvid_line_rate arvid_rate_table[7][RATE_SIZE];
 
 
 
@@ -133,6 +136,30 @@ static int init_pruss_(void) {
 	return 0;
 }
 
+/* setup pru data related to video mode and rendering */
+static void setPruMem(int fbWidth, int fbLines) {
+	int blockCnt;
+
+	ap.pruMem[0] = (unsigned int) ap.ddrAddress;
+	//note: pruMem[1] contains current frame number
+
+	//set BLOCK_COUNT to PRU (horizontal resolution)
+	blockCnt = fbWidth / 32;
+	if ((fbWidth % 32) == 0) {
+		ap.pruMem[2] = blockCnt; //stream 32 pixels per block (64 bytes) 
+	} else {
+		//stream one more block
+		blockCnt ++;
+		//set flag to propelry adjust the next line address
+		//note: '<< 17' means 16 + 1. 16 to offset to high word, 1 to multiply the value * 2 
+		//to get number of bytes to detract from the frame-buffer address
+		ap.pruMem[2] = (blockCnt) | ((32 - (fbWidth % 32)) << 17) ; //stream 32 pixels per block (64 bytes) 
+	}
+
+	//set TOTAL_LINES to PRU (vertical resolution)
+	ap.pruMem[3] = fbLines;
+}
+
 /* initialize memory mapping */
 int init_memory_mapping_(void) {
 	int fd;
@@ -141,12 +168,9 @@ int init_memory_mapping_(void) {
 	//map internal pru memory 
 	prussdrv_map_prumem(PRUSS0_PRU1_DATARAM, &mem);
 	ap.pruMem = (unsigned int*) mem;
-	ap.pruMem[0] = (unsigned int) ap.ddrAddress;
-	//note: pruMem[1] contains current frame number
-	//set BLOCK_COUNT to PRU (horizontal resolution)
-	ap.pruMem[2] = INITIAL_FB_W / 32; //stream 32 pixels per block (64 bytes) 
-	//set TOTAL_LINES to PRU (vertical resolution)
-	ap.pruMem[3] = INITIAL_FB_LINES;
+
+	//set video mode info to pru
+	setPruMem(INITIAL_FB_W, INITIAL_FB_LINES);
 
 	//map DDR memory
 	fd = open("/dev/mem", O_RDWR);
@@ -403,12 +427,8 @@ int arvid_set_video_mode(arvid_video_mode mode, int lines) {
 		return ARVID_ERROR_ILLEGAL_VIDEO_MODE;
 	}
 
-	ap.pruMem[0] = (unsigned int) ap.ddrAddress;
-	//note: pruMem[1] contains current frame number
-	//set BLOCK_COUNT to PRU (horizontal resolution)
-	ap.pruMem[2] = arvid_resolution[mode] / 32; //stream 32 pixels per block (64 bytes) 
-	//set TOTAL_LINES to PRU (vertical resolution)
-	ap.pruMem[3] = lines;
+	//set video mode info to pru
+	setPruMem(arvid_resolution[mode], lines);
 
 	//reset prus initial synchronisation state
 	ap.ddrMem[0] = 0;
