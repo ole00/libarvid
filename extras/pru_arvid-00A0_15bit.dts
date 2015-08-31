@@ -1,0 +1,107 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "ti,beaglebone", "ti,beaglebone-black";
+	part-number = "pru_arvid";
+	version = "00A0";
+
+	/* Define pins and resources this config sets up. */
+	/* pin numbers on header P8 or P9 */
+
+	exclusive-use = 
+	"P8.45", /* GPIO2_6 */
+	"P8.46", /* GPIO2_7 */
+	"P8.43", /* GPIO2_8 */
+	"P8.44", /* GPIO2_9 */
+	"P8.41", /* GPIO2_10 */
+
+	"P8.42", /* GPIO2_11 */
+	"P8.39", /* GPIO2_12 */
+	"p8.40", /* GPIO2_13 */
+	"p8.37", /* GPIO2_14 */
+	"p8.38", /* GPIO2_15 */
+
+	"p8.18", /* GPIO2_1 */
+	"p8.9",  /* GPIO2_5 */
+	"p8.10", /* GPIO2_4 */
+	"p8.7",  /* GPIO2_2 */
+	"p8.8",  /* GPIO2_3 */
+
+	"p8.26", /* GPIO_61 aka GPIO1_29  - sync */
+
+	"pru1" ; /* PRU unit 1 */
+
+	
+
+	fragment@0 {
+		target = <&am33xx_pinmux>;
+
+		__overlay__ {
+			status = "okay";
+
+			pru_test_pins: pinmux_pru_test_pins {
+				/* PRU Low latency IO */
+				pinctrl-single,pins = <
+					0x0A0 0x07  /* P8.45 mode 7 -> output */
+					0x0A4 0x07  /* P8.46 mode 7 -> output */
+					0x0A8 0x07  /* P8.43 mode 7 -> output */
+					0x0AC 0x07  /* P8.44 mode 7 -> output */
+					0x0B0 0x07  /* P8.41 mode 7 -> output */
+
+					0x0B4 0x07  /* P8.42 mode 7 -> output */
+					0x0B8 0x07  /* P8.39 mode 7 -> output */
+					0x0BC 0x07  /* P8.40 mode 7 -> output */
+					0x0C0 0x07  /* P8.37 mode 7 -> output */
+					0x0C4 0x07  /* P8.38 mode 7 -> output */
+
+					0x08C 0x07  /* P8.18 mode 7 -> output */
+					0x09C 0x07  /* P8.9  mode 7 -> output */
+					0x098 0x07  /* P8.10 mode 7 -> output */
+					0x090 0x07  /* P8.7  mode 7 -> output */
+					0x094 0x07  /* P8.8  mode 7 -> output */
+
+					0x07C 0x07  /* P8.26 mode 7 -> output */
+
+				>;
+			};
+
+		};
+	};
+
+	fragment@1 {
+		target = <&pruss>;
+		__overlay__ {
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&pru_test_pins>;
+			enabled = <1>;
+			/* 
+			NOTE: all gpioX controllers are numbered from 1 !
+			That means GPIO1 is actually specified here as 'gpio2' !
+			*/
+
+			hv_sync {
+				pin-names = "Arvid:hv_sync";
+				gpios = <&gpio2 29 0>;
+			};
+
+			red_bits {
+				pin-names = "Arvid:red_0", "Arvid:red_1", "Arvid:red_2", "Arvid:red_3", "Arvid:red_4";
+				gpios     = <&gpio3 11 0    &gpio3 12 0    &gpio3 13 0   &gpio3 14 0   &gpio3 15 0>;
+			};
+
+			green_bits {
+				pin-names = "Arvid:green_0", "Arvid:green_1", "Arvid:green_2", "Arvid:green_3", "Arvid:green_4";
+				gpios     = <&gpio3 6 0       &gpio3 7 0       &gpio3 8 0       &gpio3 9 0       &gpio3 10 0>;
+			};
+
+			blue_bits {
+				pin-names = "Arvid:blue_0", "Arvid:blue_1", "Arvid:blue_2", "Arvid:blue_3", "Arvid:blue_4";
+				gpios     = <&gpio3 1 0      &gpio3 2 0      &gpio3 3 0      &gpio3 4 0      &gpio3 5 0>;
+			};
+
+		};
+	};
+
+};
