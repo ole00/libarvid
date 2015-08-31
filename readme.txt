@@ -27,3 +27,7 @@ notes:
   current working directory of an application that uses/links libarvid
 
 
+-------------
+Ver 0.2c
+- support for packet duplicates to tackle lost packets issue
+
