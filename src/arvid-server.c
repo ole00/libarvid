@@ -34,8 +34,10 @@ IN THE PRODUCT.
 
 #include "zlib.h"
 #include "arvid.h"
+#include "libarvid.h"
 
-
+//send back up to 3 packets of the same content
+#define PACKET_CNT 3
 
 
 //8 x 8 tiles
@@ -266,6 +268,7 @@ static void paintString(char* text, int x, int y,unsigned short color) {
 
 int main(int argc, char**argv)
 {
+	int i;
 	int sockfd;
 	struct sockaddr_in servaddr,cliaddr;
 	socklen_t len;
@@ -274,6 +277,7 @@ int main(int argc, char**argv)
 	z_stream zStream;
 	unsigned char* zWindow;
 	char* ipAddr = NULL;
+	unsigned short packetId = 0x1FFF;
 
 	zWindow = (unsigned char*) malloc(32 * 1024);
 	if (zWindow == NULL) {
@@ -313,10 +317,10 @@ int main(int argc, char**argv)
 		int textW = strlen(ipAddr) * 8;
 		int posX = (arvid_get_width() - textW ) / 2;
 		int posY = arvid_get_height() - 48;
-		unsigned short color = 0x111; //background color
+		unsigned short color = COLOR(0x1F, 0x1F, 0x1F); //background color
 		fillRect(posX - 2, posY - 2, textW + 4, 12, color, 0);
 		fillRect(posX - 2, posY - 2, textW + 4, 12, color, 1);
-		paintString(ipAddr, posX, posY, 0xA80);
+		paintString(ipAddr, posX, posY, COLOR(0xA0, 0x80, 0));
 	}
 
 
@@ -325,6 +329,25 @@ int main(int argc, char**argv)
 	while(1)
 	{
 		recvfrom(sockfd, (char*) data, totalSize, 0,(struct sockaddr *)&cliaddr,&len);
+
+		//Very crude mechanism how to tackle lost packets on critical commands.
+		//Basically we send every critical packet X times to hope at least one
+		//of them is transferred, then we ignore the duplicate packets.
+		//To distinguish duplicate packets every packet has its packet id.
+		//Duplicates have the same packet id.
+		//We do similar thing when sending back a response - we send the
+		//response X times and expect the receiver throws away any duplicates.
+
+		//ignore duplicate packets except on blits
+		if (data[0] != 1) {
+			unsigned short id = data[1];
+			//packet id is identical - ignore this packet
+			if (id == packetId) {
+				data[0] = 0; //ignore command
+			} else {
+				packetId = id;
+			}
+		}
 		//printf("command: %i\n", data[0]);
 		switch (data[0]) {
 			case 1: // blit 
@@ -348,52 +371,76 @@ int main(int argc, char**argv)
 				} break;
 			case 2: // get frame number
 				{
-					int* result =  (int*) data;
+					int* result =  (int*) &data[1];
 					*result = arvid_get_frame_number();
-					sendto(sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					data[0] = packetId;
+					for (i = 0; i < PACKET_CNT; i++) {
+						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					}
 				} break;
 			case 3: //wait for vsync - returns current frame number
 				{
-					int* result =  (int*) data;
+					int* result =  (int*) &data[1];
 					arvid_wait_for_vsync();
 					*result = arvid_get_frame_number();
-					sendto(sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					data[0] = packetId;
+					for (i = 0; i < PACKET_CNT; i++) {
+						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					}
 				} break;
 			case 4: //set video mode
 				{
-					int* result = (int*) data;
-					*result = arvid_set_video_mode((arvid_video_mode) data[1], data[2]);
-					sendto(sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					int* result = (int*) &data[1];
+					*result = arvid_set_video_mode((arvid_video_mode) data[2], data[3]);
+					data[0] = packetId;
+					for (i = 0; i < PACKET_CNT; i++) {
+						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					}
 				}; break;
 			case 5: //get video mode lines
 				{
-					int* result = (int*) data;
-					*result = arvid_get_video_mode_lines((arvid_video_mode) data[1], (float)( data[2] / 1000.0f));  
-					sendto(sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					int* result = (int*) &data[1];
+					*result = arvid_get_video_mode_lines((arvid_video_mode) data[2], (float)( data[3] / 1000.0f));  
+					data[0] = packetId;
+					for (i = 0; i < PACKET_CNT; i++) {
+						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					}
 				}; break;
 			case 6: //get video mode refresh rate
 				{
-					int* result = (int*) data;
-					*result = arvid_get_video_mode_refresh_rate((arvid_video_mode) data[1], data[2]) * 1000;
-					sendto(sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					int* result = (int*) &data[1];
+					*result = arvid_get_video_mode_refresh_rate((arvid_video_mode) data[2], data[3]) * 1000;
+					data[0] = packetId;
+					for (i = 0; i < PACKET_CNT; i++) {
+						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					}
 				}; break;
 			case 7: // get width
 				{
-					int* result = (int*) data;
+					int* result = (int*) &data[1];
 					*result = arvid_get_width();
-					sendto(sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					data[0] = packetId;
+					for (i = 0; i < PACKET_CNT; i++) {
+						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					}
 				}; break;
 			case 8: // get height
 				{
-					int* result = (int*) data;
+					int* result = (int*) &data[1];
 					*result = arvid_get_height();
-					sendto(sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					data[0] = packetId;
+					for (i = 0; i < PACKET_CNT; i++) {
+						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					}
 				}; break;
 			case 11: // init
 				{
-					int* result = (int*) data;
+					int* result = (int*) &data[1];
 					*result = arvid_init();
-					sendto(sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					data[0] = packetId;
+					for (i = 0; i < PACKET_CNT; i++) {
+						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					}
 					//set cpu freq to stable frequency
 					//system("cpufreq-set -f 800MHz");
 					system("cpufreq-set -f 1000MHz");
@@ -401,12 +448,15 @@ int main(int argc, char**argv)
 
 			case 12: // close
 				{
-					int* result = (int*) data;
+					int* result = (int*) &data[1];
 					*result = arvid_close();
-					sendto(sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					data[0] = packetId;
+					for (i = 0; i < PACKET_CNT; i++) {
+						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					}
 					//set cpu frequency back to default
 					system("cpufreq-set -g ondemand");
-
+					packetId = 0x1FFF;
 				}; break;
 
 
