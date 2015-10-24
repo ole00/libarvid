@@ -2,7 +2,7 @@
 /plugin/;
 
 / {
-	compatible = "ti,beaglebone", "ti,beaglebone-black";
+	compatible = "ti,beaglebone", "ti,beaglebone-black", "ti,beaglebone-green";
 	part-number = "pru_arvid";
 	version = "00A0";
 
@@ -28,7 +28,8 @@
 	"p8.7",  /* GPIO2_2 */
 	"p8.8",  /* GPIO2_3 */
 
-	"p8.26", /* GPIO_61 aka GPIO1_29  - sync */
+	"p8.26", /* GPIO_61 aka GPIO1_29  - sync - old */
+	"p8.28", /* GPIO2_24 - sync new */
 
 	"pru1" ; /* PRU unit 1 */
 
@@ -62,7 +63,7 @@
 					0x094 0x07  /* P8.8  mode 7 -> output */
 
 					0x07C 0x07  /* P8.26 mode 7 -> output */
-
+					0x0E8 0x07  /* P8.28 mode 7 -> output */
 				>;
 			};
 
@@ -82,8 +83,8 @@
 			*/
 
 			hv_sync {
-				pin-names = "Arvid:hv_sync";
-				gpios = <&gpio2 29 0>;
+				pin-names = "Arvid:hv_sync_old", "Arvid:hv_sync";
+				gpios = <&gpio2 29 0    &gpio3 24 0>;
 			};
 
 			red_bits {
