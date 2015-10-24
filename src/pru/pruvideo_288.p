@@ -81,13 +81,13 @@ Start:
 
 
 //setup sync data
-	mov SYNC_BIT, 1 << 29 //GPIO1_29
+	mov SYNC_BIT, 1 << 24 //GPIO2_24
 
 //sync_lo is now address to CLEAR individual bits on GPIO
-	mov SYNC_LO, GPIO1 | GPIO_CLR
+	mov SYNC_LO, GPIO2 | GPIO_CLR
 
 //sync_hi is now address to SET individual bits on GPIO
-	mov SYNC_HI, GPIO1 | GPIO_SET
+	mov SYNC_HI, GPIO2 | GPIO_SET
 
 //set up the gpio2 slow address. By writing to this address
 //all GPIOs bits will be set and unset all at once
