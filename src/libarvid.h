@@ -29,10 +29,11 @@ IN THE PRODUCT.
 
 
 //internal for arvid
-#define INITIAL_VIDEO_MODE arvid_392
-#define INITIAL_FB_W  392
+#define INITIAL_VIDEO_MODE arvid_384
+#define INITIAL_FB_W  384
 #define INITIAL_FB_H  240
-#define INITIAL_FB_LINES 304
+//#define INITIAL_FB_LINES 304
+#define INITIAL_FB_LINES 253
 
 
 #define RATE_SIZE 57
