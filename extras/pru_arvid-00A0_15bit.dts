@@ -28,8 +28,10 @@
 	"p8.7",  /* GPIO2_2 */
 	"p8.8",  /* GPIO2_3 */
 
-	"p8.26", /* GPIO_61 aka GPIO1_29  - sync - old */
-	"p8.28", /* GPIO2_24 - sync new */
+	"p8.28", /* GPIO2_24 - sync */
+
+	"p9.27", /* GPIO3_19 TATE switch */
+	"p9.28", /* GPIO3_17 Coin button */
 
 	"pru1" ; /* PRU unit 1 */
 
@@ -41,7 +43,7 @@
 		__overlay__ {
 			status = "okay";
 
-			pru_test_pins: pinmux_pru_test_pins {
+			arvid_pru_pins: pinmux_arvid_pru_pins {
 				/* PRU Low latency IO */
 				pinctrl-single,pins = <
 					0x0A0 0x07  /* P8.45 mode 7 -> output */
@@ -62,8 +64,10 @@
 					0x090 0x07  /* P8.7  mode 7 -> output */
 					0x094 0x07  /* P8.8  mode 7 -> output */
 
-					0x07C 0x07  /* P8.26 mode 7 -> output */
 					0x0E8 0x07  /* P8.28 mode 7 -> output */
+
+					0x1A4 0x37  /* P9.27 mode 37 -> input, pullup */
+					0x19C 0x37  /* P9.28 mode 37 -> input, pullup */
 				>;
 			};
 
@@ -75,16 +79,21 @@
 		__overlay__ {
 			status = "okay";
 			pinctrl-names = "default";
-			pinctrl-0 = <&pru_test_pins>;
+			pinctrl-0 = <&arvid_pru_pins>;
 			enabled = <1>;
 			/* 
 			NOTE: all gpioX controllers are numbered from 1 !
-			That means GPIO1 is actually specified here as 'gpio2' !
+			That means GPIO2 is actually specified here as 'gpio3' !
 			*/
 
 			hv_sync {
-				pin-names = "Arvid:hv_sync_old", "Arvid:hv_sync";
-				gpios = <&gpio2 29 0    &gpio3 24 0>;
+				pin-names = "Arvid:hv_sync";
+				gpios = <&gpio3 24 0>;
+			};
+
+			buttons {
+				pin-names = "Arvid:tate_switch", "Arvid:coin_button";
+				gpios = <&gpio4 27 0    &gpio4 28 0>;
 			};
 
 			red_bits {
