@@ -44,6 +44,9 @@ IN THE PRODUCT.
 #define ARVID_ERROR_PRU_CLOSE_FAILED (-6)
 #define ARVID_ERROR_ILLEGAL_VIDEO_MODE (-7)
 
+#define ARVID_TATE_SWITCH (1 << 19)
+#define ARVID_COIN_BUTTON (1 << 17)
+
 typedef enum  {
 	arvid_320 = 0,
 	arvid_256,
@@ -129,6 +132,10 @@ or negative error code.
 */
 int arvid_wait_for_vsync(void);
 
+/**
+Returns bitmask of button state.
+*/
+int arvid_get_button_state(void);
 
 /**
 Returns current resolution width in pixels or error code.

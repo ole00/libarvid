@@ -38,6 +38,7 @@ IN THE PRODUCT.
 #include "libarvid.h"
 #include "blitter.h"
 
+#define ARVID_BUTTON_MASK (ARVID_COIN_BUTTON | ARVID_TATE_SWITCH)
 
 //corresponds to videomodes
 static int arvid_resolution[] = {
@@ -339,6 +340,16 @@ int arvid_wait_for_vsync(void) {
 	}
 //	arvidStartFrame_ = frame;
 	return 1 - (frame & 1);
+}
+
+int arvid_get_button_state(void) {
+	//check not yet initialized
+	ARVID_INIT_CHECK;
+	{
+		//gpi buttons are pulled high by default, we have to invert them
+		volatile unsigned int buttons = ~ap.pruMem[4];
+		return (unsigned int) (buttons & ARVID_BUTTON_MASK);
+	}
 }
 
 int arvid_get_width(void) {

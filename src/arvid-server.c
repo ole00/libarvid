@@ -381,11 +381,14 @@ int main(int argc, char**argv)
 			case 3: //wait for vsync - returns current frame number
 				{
 					int* result =  (int*) &data[1];
+					int* button = result + 1;
 					arvid_wait_for_vsync();
 					*result = arvid_get_frame_number();
+					*button = arvid_get_button_state();
+					//printf("button = %08x \n", *button);
 					data[0] = packetId;
 					for (i = 0; i < PACKET_CNT; i++) {
-						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+						sendto(sockfd, data, 10, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
 					}
 				} break;
 			case 4: //set video mode
