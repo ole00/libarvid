@@ -26,6 +26,9 @@
 
 #include "utils.p"
 
+#define GPIO3 0x481ae000
+#define GPIO_DATAIN 0x138
+#define GPIO_IN_ADDR r2
 
 #define FRAME_BUFFER r5
 #define PIXEL_BUFFER r6
@@ -34,13 +37,13 @@
 #define FRAME_BUFFER_2 r25
 #define FRAME_NUM  r26
 #define BLOCK_COUNT r3
-// r2 is unused
 
 #define STATE	r4
 #define STATE_ADDR 			0x10000
 #define DDR_ADDR			0x10004
 #define BLOCK_COUNT_ADDR 	 0x2008
 #define FRAME_NUM_ADDR   	 0x2004
+#define BUTTON_STATE_ADDR    0x2010
 #define PIXEL_ADDR_START 	0x10010
 
 
@@ -52,6 +55,9 @@ Start:
 	LBCO r0, C4, 4, 4
 	CLR  r0, r0, 4
 	SBCO r0, C4, 4, 4
+
+	//set-up GPIO address - will need it to read button state
+	mov GPIO_IN_ADDR, GPIO3 | GPIO_DATAIN
 
 	//synchronization  with PRU1
 	// wait until STATE is equal 0xAC
@@ -98,6 +104,12 @@ odd_index_buffer:
 
 
 streaming:
+	//read gpio buttons into r1
+	lbbo r1, GPIO_IN_ADDR, 0, 4
+	//store button state (now in r1) to pruMem[4]
+	mov r0, BUTTON_STATE_ADDR
+	sbbo r1, r0, 0, 4
+
 	//store the FRAME_NUM so the host can read it
 	mov r0, FRAME_NUM_ADDR 
 	sbbo FRAME_NUM, r0, 0, 4
