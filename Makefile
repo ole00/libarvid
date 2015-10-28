@@ -17,6 +17,7 @@ ALL_TARGETS := \
 		simple_test \
 		framerate_test \
 		arvid-server \
+		arvid-splash \
 		pruvideo_240.bin \
 		pruvideo_256.bin \
 		pruvideo_320.bin \
@@ -54,6 +55,10 @@ framerate_test:  $(OUT)/framerate.o libarvid.a
 arvid-server:  $(OUT)/arvid-server.o libarvid.a
 	@echo "linking: $@"
 	gcc $(LNFLAGS) -lz -o $@ $^
+
+arvid-splash:  $(OUT)/arvid-splash.o libarvid.a
+	@echo "linking: $@"
+	gcc $(LNFLAGS) -lpng -o $@ $^
 
 
 libarvid.a: $(OFILES)
