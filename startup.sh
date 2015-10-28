@@ -4,11 +4,14 @@
 
 infinity=1
 
-#wait till everything is initialised & settled
-sleep 14
-
 #enter directory where pru files exist
 cd /home/debian/dev/libarvid
+
+#show splash
+./arvid-splash mame.png > splash.txt
+
+#wait till everything is initialised & settled
+sleep 14
 
 #remove 'stop' file if it exists
 rm -f stop
