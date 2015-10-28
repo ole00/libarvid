@@ -27,6 +27,22 @@ notes:
   current working directory of an application that uses/links libarvid
 
 
+-------------
+Ver 0.3b
+- changed sync pin to p8.28 to fix startup issues
+- added reading of buttons on  GPIO3 (requires dtbo update)
+  new buttons: 
+   * tate switch p9.27
+   * coin button p9.28
+  all buttons need to be connected to ground to report value 1.
+  Internally they are pulled high.
+- dtbo now supports Beaglebone Green as well 
+- added arvid-splash program that shows arvid logo during boot-up
+- improved arvid-server to show ipaddress of active network interface.
+  Previously ipaddress of eth0 was always displayed even when it was not
+  connected.
+- improved service screen to show rotated logo according the state of the
+  Tate switch.
 
 -------------
 Ver 0.3a
