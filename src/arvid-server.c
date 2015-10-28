@@ -23,10 +23,14 @@ IN THE PRODUCT.
 
 */
 
-/* Arvic UDP server */
+/* Arvid UDP server */
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <linux/ethtool.h>
+#include <linux/sockios.h>
 #include <stdio.h>
 #include <memory.h>
 #include <arpa/inet.h>
@@ -189,18 +193,52 @@ int inflate_out(void* descriptor, unsigned char* buffer, unsigned int size) {
 	return 0;
 }
 
+static int checkInterfaceLink(char* name) {
+	int res;
+	struct ifreq request;
+	struct ethtool_value data;
+	int socketId = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+	if (socketId < 0) {
+		return 0;
+	}
+	strcpy(request.ifr_name, name);
+	request.ifr_data = (char*) &data;
+	data.cmd = ETHTOOL_GLINK;
+	res = ioctl(socketId, SIOCETHTOOL, &request);
+	close(socketId);
+	if (res < 0) {
+		return 0;
+	}
+	return !!data.data;
+}
+
 static void getIpAddress(char** result) {
 	struct ifaddrs* addr;
 	struct ifaddrs* root = NULL;
+	char* ifName;
+	int eth0Enabled = checkInterfaceLink("eth0");
+	int usb0Enabled = checkInterfaceLink("usb0");
 
 	getifaddrs(&root);
 	addr = root;
 
+	printf("eth0=%i\n", eth0Enabled);
+	printf("usb0=%i\n", usb0Enabled);
+
+	//no network
+	if (eth0Enabled == 0 && usb0Enabled == 0) {
+		*result = (char*) malloc(10);
+		strcpy(*result, "0.0.0.0");
+		return;
+	}
+
+	ifName = eth0Enabled ? "eth0" : "usb0";
+
 	while (addr != NULL) {
 		if (
 			addr->ifa_addr != NULL && 
-			addr->ifa_addr->sa_family == AF_INET && 
-			strncmp("eth0", addr->ifa_name, 4) == 0) 
+			addr->ifa_addr->sa_family == AF_INET &&
+			strncmp(ifName, addr->ifa_name, 4) == 0)
 		{
 			struct sockaddr_in* inetAddr = (struct sockaddr_in*) addr->ifa_addr;
 			*result = inet_ntoa(inetAddr->sin_addr);
