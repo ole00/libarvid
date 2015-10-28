@@ -29,6 +29,6 @@ IN THE PRODUCT.
 
 
 void arvid_fill_rect(int fbIndex, int x, int y, int w, int h, unsigned short color);
-
+void arvid_draw_image(int fbIndex, int x, int y, int w, int h, unsigned short* image, int rotate);
 
 #endif

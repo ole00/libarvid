@@ -48,3 +48,37 @@ void arvid_fill_rect(int fbIndex, int x, int  y, int w, int h, unsigned short co
 		fb += ap.fbWidth;
 	}
 }
+
+// x,y - coordinates in non-rotated space
+// w,h - dimensions of non-rotated image
+void arvid_draw_image(int fbIndex, int x, int y, int w, int h, unsigned short* image, int rotate) {
+	int j, i;
+	unsigned short* ptr = ap.fb[fbIndex];
+	int maxW = ap.fbWidth;
+	unsigned short* src = image;
+	int hm1 = h - 1;
+
+	ptr += maxW * y + x;
+
+	if (rotate) {
+		for (j = 0; j < w; j++) {
+			for (i = 0; i < h; i++) {
+				int srcIndex = ((hm1 - i) * w) + j;
+				ptr[i] = src[srcIndex];
+			}
+			ptr += maxW;
+		} 
+		return;
+	}
+
+
+	for (j = 0; j < h; j++) {
+		src = image + j * w;
+		for (i = 0; i < w; i++) {
+			ptr[i] = *src;
+			src++;
+		}
+		ptr += maxW;
+	}
+}
+
