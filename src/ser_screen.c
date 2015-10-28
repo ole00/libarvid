@@ -27,6 +27,7 @@ IN THE PRODUCT.
 Service screen
 */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
 
@@ -78,7 +79,9 @@ int arvid_show_service_screen(void) {
 	const unsigned short borderColor = COLOR(0x7F, 0x2F, 0x2f);
 	int i, j;
 	int posX, posY;
-	int index;
+	int rotate;
+	unsigned short* image;
+	int max;
 
 	//sanity check
 	ARVID_INIT_CHECK;
@@ -109,7 +112,7 @@ int arvid_show_service_screen(void) {
 	//generate RGB shade pattern
 	posX = (ap.fbWidth - (32 * 4)) / 2 ;
 	posX = (posX >> 3) << 3; //make it 8 pixel boundary
-	posY = 64 + topLine;
+	posY = 56 + topLine;
 	for (i = 0; i < 32; i++) {
 		arvid_fill_rect(0, posX,      posY + (i * 4), 32, 4, COLOR(i << 3, 0, 0)); // red
 		arvid_fill_rect(0, posX + 32, posY + (i * 4), 32, 4, COLOR(0, i << 3, 0)); // green
@@ -132,25 +135,37 @@ int arvid_show_service_screen(void) {
 		arvid_fill_rect(0, ap.fbWidth - 5, topLine + 3 + i * 8, 3, 3, borderColor);
 	}
 
-
-	//draw logo
-	index = 0;
-	posX = (ap.fbWidth - arvid_logo.width) / 2;
-	posY = 22;
-
-	arvid_fill_rect(0, posX - 4, posY + topLine - 4, arvid_logo.width + 8, arvid_logo.height + 8, grayDark);
-
-
-	for (j = 0; j < arvid_logo.height; j++) {
-		framePtr = &fb[ap.fbWidth * (j + posY + topLine)];
-		framePtr+= posX;
-		for (i = 0; i < arvid_logo.width; i++) {
-			unsigned short c = arvid_logo.pixel_data[index++] << 4;
-			if (c) {
-				framePtr[i] = (unsigned short) COLOR(c,c,c);
-			}
+	//convert logo to unsigned short format
+	max = arvid_logo.width * arvid_logo.height;
+	image = (unsigned short*) malloc(max * 2);
+	for (i = 0; i < max; i++) {
+		unsigned short c = arvid_logo.pixel_data[i] << 4;
+		if (c) {
+			image[i] = (unsigned short) COLOR(c,c,c);
+		} else {
+			image[i] = grayDark;
 		}
 	}
+
+
+	//check tate switch
+	rotate = arvid_get_button_state() & ARVID_TATE_SWITCH;
+
+	//draw logo background
+	if (rotate) {
+		posX = ap.fbWidth - arvid_logo.height + 1;
+		posX -= ap.fbWidth > 256 ? 30 : 22;
+		posY = (ap.fbHeight - arvid_logo.width) / 2 + topLine;
+		arvid_fill_rect(0, posX - 4, posY - 4, arvid_logo.height + 8, arvid_logo.width + 8, grayDark);
+	} else {
+		posX = (ap.fbWidth - arvid_logo.width) / 2;
+		posY = 22 + topLine;
+		arvid_fill_rect(0, posX - 4, posY - 4, arvid_logo.width + 8, arvid_logo.height + 8, grayDark);
+	}
+	//draw logo
+	arvid_draw_image(0, posX, posY, arvid_logo.width, arvid_logo.height, image, rotate);
+
+	free(image);
 
 	//copy framebuffer
 	memcpy(ap.fb[1], ap.fb[0], 0x100000);
