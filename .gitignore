@@ -1,9 +1,12 @@
 *.o
 *.bin
 *.a
+*.png
 arvid-server
+arvid-splash
 framerate_test
 simple_test
 stop
 log.txt
+splash.txt
 
