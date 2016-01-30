@@ -55,8 +55,6 @@ typedef struct arvid_private_t {
 	int fbHeight;
 
 	unsigned short* fb[2];
-
-
 } arvid_private;
 
 typedef struct arvid_line_rate_t {

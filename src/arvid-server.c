@@ -54,6 +54,9 @@ IN THE PRODUCT.
 #define CMD_INIT 11
 #define CMD_CLOSE 12
 
+#define CMD_GET_LINE_MOD 32
+#define CMD_SET_LINE_MOD 33
+
 
 //8 x 8 tiles
 static unsigned char tiles[][64] = {
@@ -536,6 +539,20 @@ int main(int argc, char**argv)
 					for (i = 0; i < PACKET_CNT; i++) {
 						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
 					}
+				}; break;
+
+			case CMD_GET_LINE_MOD: // get line sync modifier
+				{
+					data[0] = packetId;
+					data[1] = (short) arvid_get_line_sync_modifier();
+					for (i = 0; i < PACKET_CNT; i++) {
+						sendto(sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					}
+				}; break;
+			case CMD_SET_LINE_MOD: //set line sync modifier
+				{
+					arvid_show_service_screen();
+					arvid_set_line_sync_modifier((int)data[2]);
 				}; break;
 			case CMD_INIT: // init
 				{

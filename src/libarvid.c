@@ -60,6 +60,9 @@ IN THE PRODUCT.
 //gpio state - buttons
 #define PRU_DATA_GPIO_STATE 4
 
+//line length modifier - affects beam synchronistation
+#define PRU_DATA_LINE_SYNC_MOD 5
+
 //corresponds to videomodes
 static int arvid_resolution[] = {
 	320,
@@ -179,6 +182,8 @@ static void setPruMem(int fbWidth, int fbLines) {
 
 	//set TOTAL_LINES to PRU (vertical resolution)
 	ap.pruMem[PRU_DATA_TOTAL_LINES] = fbLines;
+
+	ap.pruMem[PRU_DATA_LINE_SYNC_MOD] = 0;
 }
 
 /* initialize memory mapping */
@@ -487,4 +492,21 @@ unsigned int arvid_get_frame_number(void) {
 	}
 
 	return (unsigned int) ap.pruMem[PRU_DATA_FRAME_NUMBER];
+}
+
+void arvid_set_line_sync_modifier(int mod) {
+	//check not yet initialized
+	if (ap.initialized != 0xACCE5503) {
+		return;
+	}
+	printf("sync mode set: %i\n", mod);
+	ap.pruMem[PRU_DATA_LINE_SYNC_MOD] = mod;
+}
+
+int arvid_get_line_sync_modifier() {
+	//check not yet initialized
+	if (ap.initialized != 0xACCE5503) {
+		return 0;
+	}
+	return ap.pruMem[PRU_DATA_LINE_SYNC_MOD];
 }

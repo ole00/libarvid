@@ -159,9 +159,19 @@ Corresponds to the height of the framebuffer.
 int arvid_get_height(void);
 
 /**
-Return current frame number
+Returns current frame number.
 */
 unsigned int arvid_get_frame_number(void);
 
+/**
+Set the line synchronisation modifier.
+*/
+void arvid_set_line_sync_modifier(int mod);
+
+
+/**
+Returns the line sync modifier.
+*/
+int arvid_get_line_sync_modifier(void);
 
 #endif
