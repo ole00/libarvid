@@ -40,6 +40,26 @@ IN THE PRODUCT.
 
 #define ARVID_BUTTON_MASK (ARVID_COIN_BUTTON | ARVID_TATE_SWITCH)
 
+//PRU Data:
+//byte 0  - 63 : header: video mode registers and misc info (16 integers)
+//byte 64 - XX : frame buffer data - individal pixels of a single line
+//               in ARGB1555 format streamed from DDR
+
+//Frame buffer address index
+#define PRU_DATA_FB_ADDR 0
+
+//Frame sequential number
+#define PRU_DATA_FRAME_NUMBER 1
+
+//line length block count
+#define PRU_DATA_BLOCK_COUNT 2
+
+//number of lines to render
+#define PRU_DATA_TOTAL_LINES 3
+
+//gpio state - buttons
+#define PRU_DATA_GPIO_STATE 4
+
 //corresponds to videomodes
 static int arvid_resolution[] = {
 	320,
@@ -141,24 +161,24 @@ static int init_pruss_(void) {
 static void setPruMem(int fbWidth, int fbLines) {
 	int blockCnt;
 
-	ap.pruMem[0] = (unsigned int) ap.ddrAddress;
+	ap.pruMem[PRU_DATA_FB_ADDR] = (unsigned int) ap.ddrAddress;
 	//note: pruMem[1] contains current frame number
 
 	//set BLOCK_COUNT to PRU (horizontal resolution)
 	blockCnt = fbWidth / 32;
 	if ((fbWidth % 32) == 0) {
-		ap.pruMem[2] = blockCnt; //stream 32 pixels per block (64 bytes) 
+		ap.pruMem[PRU_DATA_BLOCK_COUNT] = blockCnt; //stream 32 pixels per block (64 bytes) 
 	} else {
 		//stream one more block
 		blockCnt ++;
 		//set flag to propelry adjust the next line address
 		//note: '<< 17' means 16 + 1. 16 to offset to high word, 1 to multiply the value * 2 
 		//to get number of bytes to detract from the frame-buffer address
-		ap.pruMem[2] = (blockCnt) | ((32 - (fbWidth % 32)) << 17) ; //stream 32 pixels per block (64 bytes) 
+		ap.pruMem[PRU_DATA_BLOCK_COUNT] = (blockCnt) | ((32 - (fbWidth % 32)) << 17) ; //stream 32 pixels per block (64 bytes) 
 	}
 
 	//set TOTAL_LINES to PRU (vertical resolution)
-	ap.pruMem[3] = fbLines;
+	ap.pruMem[PRU_DATA_TOTAL_LINES] = fbLines;
 }
 
 /* initialize memory mapping */
@@ -338,13 +358,13 @@ unsigned int arvid_get_frame_buffer_size(void) {
 int arvid_wait_for_vsync(void) {
 	//check not yet initialized
 	ARVID_INIT_CHECK;
-	volatile unsigned int frame = ap.pruMem[1];
+	volatile unsigned int frame = ap.pruMem[PRU_DATA_FRAME_NUMBER];
 	unsigned int arvidStartFrame_ = frame;
 
 	//check frame number has changed
 	while (frame == arvidStartFrame_) {
 		usleep(37);
-		frame = ap.pruMem[1];
+		frame = ap.pruMem[PRU_DATA_FRAME_NUMBER];
 	}
 //	arvidStartFrame_ = frame;
 	return 1 - (frame & 1);
@@ -355,7 +375,7 @@ int arvid_get_button_state(void) {
 	ARVID_INIT_CHECK;
 	{
 		//gpi buttons are pulled high by default, we have to invert them
-		volatile unsigned int buttons = ~ap.pruMem[4];
+		volatile unsigned int buttons = ~ap.pruMem[PRU_DATA_GPIO_STATE];
 		return (unsigned int) (buttons & ARVID_BUTTON_MASK);
 	}
 }
@@ -466,5 +486,5 @@ unsigned int arvid_get_frame_number(void) {
 		return 0;
 	}
 
-	return (unsigned int) ap.pruMem[1];
+	return (unsigned int) ap.pruMem[PRU_DATA_FRAME_NUMBER];
 }
