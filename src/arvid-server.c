@@ -43,6 +43,17 @@ IN THE PRODUCT.
 //send back up to 3 packets of the same content
 #define PACKET_CNT 3
 
+#define CMD_BLIT 1
+#define CMD_FRAME_NUMBER 2
+#define CMD_VSYNC 3
+#define CMD_SET_VIDEO_MODE 4
+#define CMD_GET_VIDEO_MODE_LINES 5
+#define CMD_GET_VIDEO_MODE_FREQ 6
+#define CMD_GET_WIDTH 7
+#define CMD_GET_HEIGHT 8
+#define CMD_INIT 11
+#define CMD_CLOSE 12
+
 
 //8 x 8 tiles
 static unsigned char tiles[][64] = {
@@ -440,7 +451,7 @@ int main(int argc, char**argv)
 		}
 		//printf("command: %i\n", data[0]);
 		switch (data[0]) {
-			case 1: // blit 
+			case CMD_BLIT: // blit 
 				{
 					int bufferIndex = 1 - (arvid_get_frame_number() & 1);
 					//int bufferIndex = data[3];
@@ -459,7 +470,7 @@ int main(int argc, char**argv)
 
 					//printf("  blit: size=%i, y=%i infl=%i\n", size, y, inflated);
 				} break;
-			case 2: // get frame number
+			case CMD_FRAME_NUMBER: // get frame number
 				{
 					int* result =  (int*) &data[1];
 					*result = arvid_get_frame_number();
@@ -468,7 +479,7 @@ int main(int argc, char**argv)
 						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
 					}
 				} break;
-			case 3: //wait for vsync - returns current frame number
+			case CMD_VSYNC: //wait for vsync - returns current frame number
 				{
 					int* result =  (int*) &data[1];
 					int* button = result + 1;
@@ -481,7 +492,7 @@ int main(int argc, char**argv)
 						sendto(sockfd, data, 10, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
 					}
 				} break;
-			case 4: //set video mode
+			case CMD_SET_VIDEO_MODE: //set video mode
 				{
 					int* result = (int*) &data[1];
 					*result = arvid_set_video_mode((arvid_video_mode) data[2], data[3]);
@@ -490,7 +501,7 @@ int main(int argc, char**argv)
 						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
 					}
 				}; break;
-			case 5: //get video mode lines
+			case CMD_GET_VIDEO_MODE_LINES: //get video mode lines
 				{
 					int* result = (int*) &data[1];
 					*result = arvid_get_video_mode_lines((arvid_video_mode) data[2], (float)( data[3] / 1000.0f));  
@@ -499,7 +510,7 @@ int main(int argc, char**argv)
 						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
 					}
 				}; break;
-			case 6: //get video mode refresh rate
+			case CMD_GET_VIDEO_MODE_FREQ: //get video mode refresh rate
 				{
 					int* result = (int*) &data[1];
 					*result = arvid_get_video_mode_refresh_rate((arvid_video_mode) data[2], data[3]) * 1000;
@@ -508,7 +519,7 @@ int main(int argc, char**argv)
 						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
 					}
 				}; break;
-			case 7: // get width
+			case CMD_GET_WIDTH: // get width
 				{
 					int* result = (int*) &data[1];
 					*result = arvid_get_width();
@@ -517,7 +528,7 @@ int main(int argc, char**argv)
 						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
 					}
 				}; break;
-			case 8: // get height
+			case CMD_GET_HEIGHT: // get height
 				{
 					int* result = (int*) &data[1];
 					*result = arvid_get_height();
@@ -526,7 +537,7 @@ int main(int argc, char**argv)
 						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
 					}
 				}; break;
-			case 11: // init
+			case CMD_INIT: // init
 				{
 					int* result = (int*) &data[1];
 					*result = arvid_init();
@@ -539,7 +550,7 @@ int main(int argc, char**argv)
 					system("cpufreq-set -f 1000MHz");
 				}; break;
 
-			case 12: // close
+			case CMD_CLOSE: // close
 				{
 					int* result = (int*) &data[1];
 					*result = arvid_close();
