@@ -28,14 +28,15 @@
 
 #define GPIO3 0x481ae000
 #define GPIO_DATAIN 0x138
+#define LINE_CNT r2
 #define BLOCK_COUNT r3
 #define STATE	r4
 
 #define FRAME_BUFFER r5
 #define PIXEL_BUFFER r6
 #define PIXEL_ADDR   r7
-#define DATA r8
-#define DATA2 r9
+#define GPIO_IN_ADDR r8
+#define DATA r9
 #define DATA3 r10
 #define FRAME_NUM  r26
 
@@ -64,6 +65,9 @@ Start:
 	CLR  r0, r0, 4
 	SBCO r0, C4, 4, 4
 
+	//set-up GPIO address - will need it to read button state
+	mov GPIO_IN_ADDR, GPIO3 | GPIO_DATAIN
+
 	//synchronization  with PRU1
 	// wait until STATE is equal 0xAC
 	mov r0, STATE_ADDR
@@ -85,20 +89,29 @@ init_sync:
 // =============================================================
 // prepare pixels in the buffer 
 // =============================================================
-// 320 pixels
 
 //set up inital PIXEL_ADDR of the generated buffer
 	mov PIXEL_ADDR, PIXEL_ADDR_START
-	add PIXEL_ADDR, PIXEL_ADDR, 200	//reserve 800 bytes (400 pixels) for the PRU1 line buffer
+	add PIXEL_ADDR, PIXEL_ADDR, 200	//reserve 1360 bytes (680 pixels) for the PRU1 line buffer
 	add PIXEL_ADDR, PIXEL_ADDR, 200
 	add PIXEL_ADDR, PIXEL_ADDR, 200
 	add PIXEL_ADDR, PIXEL_ADDR, 200
+	add PIXEL_ADDR, PIXEL_ADDR, 200
+	add PIXEL_ADDR, PIXEL_ADDR, 200
+	add PIXEL_ADDR, PIXEL_ADDR, 160
 
 
 // =============================================================
 // Single frame sreaming start
 // =============================================================
 streaming_start:
+
+
+	//read gpio buttons into r1
+	lbbo r1, GPIO_IN_ADDR, 0, 4
+	//store button state (now in r1) to pruMem[4]
+	mov r0, BUTTON_STATE_ADDR
+	sbbo r1, r0, 0, 4
 
 	mov FRAME_BUFFER, PIXEL_ADDR	//source 
 
@@ -123,12 +136,12 @@ streaming_start:
 // frame buffer address shift!
 // use bottom 16 bits only
 
-	//copy 8 lines
-	mov r2, 8
+	//start from line 0 in line counter
+	mov LINE_CNT, 0
 
-	//save current block index
+	//save current line number
 	mov r0, FB_BLOCK_INDEX
-	sbbo r2, r0, 0 , 4
+	sbbo LINE_CNT, r0, 0 , 4
 
 	//* signal the interrupt to the streamer
 	mov r31.b0, PRU0_R31_VEC_VALID | EVT_OUT_0
@@ -168,33 +181,30 @@ line_sync:
 	mov r1, 0
 	sbbo r1, r0, 0, 4
 
-	//decrese mini frame buffer line index
-	sub r2, r2, 1
+	//store 3 low bits of current line number to r1
+	and r1, LINE_CNT, 7
 
-	//if not the 4th line (index 4) then continue to other check
-	qbne line_check, r2, 4
+	//increase line index
+	add LINE_CNT, LINE_CNT, 1
+
+	//if the line counter is 4 or 8 (index 3 or 7) then save it
+	qbeq save_line_counter, r1, 3
+	qbeq save_line_counter_and_reset_fb, r1, 7
+
+	//else jump to line finish
+	qba line_finish
+
+save_line_counter_and_reset_fb:
+	// reset the mini frame buffer
+	mov FRAME_BUFFER, PIXEL_ADDR	//source 
+
+save_line_counter:
 	//* this is the 4th line -> signal the interrupt to the streamer
 
-	//save current block index (r2)
+	//save current line number (r2)
 	mov r0, FB_BLOCK_INDEX
-	sbbo r2, r0, 0 , 4
+	sbbo LINE_CNT, r0, 0 , 4
 
-	mov r31.b0, PRU0_R31_VEC_VALID | EVT_OUT_0
-
-line_check:
-	qbne line_finish, r2, 0	//if not the 8th line (index 0) then continue to line_finish
-	//otherwise (when counter r2 == 0):
-
-
-	//* reset the mini frame buffer
-	mov FRAME_BUFFER, PIXEL_ADDR	//source 
-	mov r2, 8
-
-	//save current block index (r2)
-	mov r0, FB_BLOCK_INDEX
-	sbbo r2, r0, 0 , 4
-
-	//* signal the interrupt to the streamer
 	mov r31.b0, PRU0_R31_VEC_VALID | EVT_OUT_0
 
 line_finish:

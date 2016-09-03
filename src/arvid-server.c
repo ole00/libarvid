@@ -35,6 +35,9 @@ IN THE PRODUCT.
 #include <memory.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
+#include <signal.h>
+
+//#include "libdmacopy.h"
 
 #include "zlib.h"
 #include "arvid.h"
@@ -197,6 +200,18 @@ unsigned short* fb[2];
 unsigned char* zSrcData;
 unsigned int zSrcSize;
 unsigned short* zDstData;
+
+
+static void sigintCallback(int x) {
+	printf("\nsigint detected\n");
+	//dma_exit();
+	arvid_close();
+	exit(-1);
+}
+
+static void registerSignalHandler() {
+	signal(SIGINT, sigintCallback);
+}
 
 unsigned int inflate_in(void* descriptor, unsigned char** buffer) {
 	printf("in called!\n");
@@ -393,6 +408,7 @@ int main(int argc, char**argv)
 		return -1;
 	}
 
+	registerSignalHandler();
 
 	getIpAddress(&ipAddr);
 	printf("ip address = %s\n", ipAddr);

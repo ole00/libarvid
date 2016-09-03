@@ -5,22 +5,30 @@
 infinity=1
 
 #enter directory where pru files exist
-cd /home/debian/dev/libarvid
+cd /home/debian/libarvid
 
-#show splash
-./arvid-splash > splash.txt
+# start arvid-splash here if you want fancy splash/logo
+# during boot
 
-#wait till everything is initialised & settled
+#wait till everything is initialised & settled.
+#don't skip this step otherwise the network might not be ready
 sleep 14
 
-#remove 'stop' file if it exists
+#stop unwanted services
+service apache2 stop
+systemctl stop wpa_supplicant.service
+systemctl stop bonescript-autorun.service
+
+
+#remove the 'stop' file if it exists
 rm -f stop
 
 echo "Starting" > log.txt
 
 while [ $infinity -gt 0 ]; do
-	#start the server
-	./arvid-server -noServiceScreen  >> log.txt
+	#start the server 
+	#use -noServiceScreen parameter to hide the service screen and keep the logo
+	./arvid-server  >> log.txt
 
 	#if the server unexpectedly stopped, then start it again
 	#unless 'stop' file exists

@@ -23,14 +23,12 @@ static char frame_server_initialised = 0;
 
 void* thread_runner(void* data) {
 	unsigned short* dstFb[2];		//pru mini frame buffer in shared pru memory
-	unsigned short* dst;
 	unsigned short* src;
 	int width = arvid_get_width();
 	int height = arvid_get_height();
 	int i;
 	volatile int fbIndex = 0;
 	int frame;
-	int cnt;
 	volatile unsigned int frameNumber;
 	struct sched_param schedParam;
 
@@ -39,21 +37,21 @@ void* thread_runner(void* data) {
 	frame_server_initialised = 1;
 	stopThread = 0;
 
-	printf("w=%i h=%i\n", width, height);
+//	printf("w=%i h=%i \n", width, height);
 
 	//each mini frame buffer is worth of 4 lines
-	dstFb[0] = (unsigned short*)(&ap.pruSharedMem[4 + 200]);
+	dstFb[0] = (unsigned short*)(&ap.pruSharedMem[4 + 340]);
 
 	dstFb[1] = dstFb[0];
 	dstFb[1] += width * 4;
 
-
-	//set priority
+	//set maximum taks priority to ensure smooth streaming
 	i = sched_getparam(0, &schedParam);
+
 	if (i) {
 		printf("failed to get scheduling\n");
 	} else {
-		schedParam.sched_priority = sched_get_priority_max(SCHED_FIFO) - 1;
+		schedParam.sched_priority = sched_get_priority_max(SCHED_FIFO) - 2;
 		i = sched_setscheduler(0, SCHED_FIFO, &schedParam);
 		if (i) {
 			printf("failed to set scheduling\n");
@@ -65,41 +63,41 @@ void* thread_runner(void* data) {
 		//wait for the start of the frame
 		prussdrv_pru_wait_event(PRU_EVTOUT_1);
 		prussdrv_pru_clear_event(PRU_EVTOUT_1, PRU0_ARM_INTERRUPT);
-		prussdrv_pru_wait_event(PRU_EVTOUT_1);
-		prussdrv_pru_clear_event(PRU_EVTOUT_1, PRU0_ARM_INTERRUPT);
+//		prussdrv_pru_wait_event(PRU_EVTOUT_1);
+//		prussdrv_pru_clear_event(PRU_EVTOUT_1, PRU0_ARM_INTERRUPT);
 		if (stopThread) {
 			goto finish;
 		}
 
 		//set the source frame buffer
-		cnt = 0;
 		frameNumber = ap.pruMem[PRU_DATA_FRAME_NUMBER];
 
-		frame = 1 - (frameNumber & 1);
+		frame =  (frameNumber & 1);
 		src = ap.fb[frame];
 		i = height;
-		//copy one frame
+		fbIndex = 0;
+		//copy one frame (one screen)
 		do {
-			dst = dstFb[fbIndex];
-			memcpy(dst, src, width << 3); // * 8,  that is 4 lines * 2 bytes per pixel
-			src += (width * 4);		  		// advance source to the next 4 lines
+			memcpy(dstFb[fbIndex], src, width << 3); // * 8,  that is 4 lines * 2 bytes per pixel
 
-			//now wait till the 4 lines are rendered
-			if (i >= 4) 
+			//if there is still some lines to render wait for the PRU signal
+			if (i >= 4)
 			{
+				int line;
 				prussdrv_pru_wait_event(PRU_EVTOUT_0);
 				prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
-				prussdrv_pru_wait_event(PRU_EVTOUT_0);
-				prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
+//				prussdrv_pru_wait_event(PRU_EVTOUT_0);
+//				prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 				if (stopThread) {
 					goto finish;
 				}
 
-				cnt+= 4;
+				//read current line
+				line = ap.pruSharedMem[2];
+				src = ap.fb[frame] + (width * line);
+				fbIndex = (((line -1) & 7) >> 2);
+				//printf("line=%03i fbLine=%03i fbIndex=%i \n", i, line, fbIndex);
 
-				fbIndex = ap.pruSharedMem[2];
-				fbIndex = 1 - ((fbIndex & 7) >> 2);
-//				printf("line=%03i fbIndex=%i , %i  event=%i\n", i, fbIndex, x, event);
 			}
 			i -= 4;						 // advance 4 lines
 
@@ -107,10 +105,8 @@ void* thread_runner(void* data) {
 			if (frameNumber != ap.pruMem[PRU_DATA_FRAME_NUMBER]) {
 				i = 0;
 			}
-
-			//printf(".\n");
 		} while (i > 0);
-//		printf("cnt=%i\n", cnt);
+
 	}
 finish:
 //	printf("thread stopped!\n");
@@ -126,8 +122,9 @@ int stop_frame_thread(void) {
 int start_frame_thread(void) {
 	int result;
 
-	//a thread was already runing
+	//a thread was already runing - wait till it's finished
 	if (frame_server_initialised) {
+//		printf("joining thread...\n");
 
 		pthread_join(thread, NULL);
 //		printf("thread joined...\n");
@@ -136,8 +133,5 @@ int start_frame_thread(void) {
 	result = pthread_create(&thread, NULL, thread_runner, NULL);
 	return result;
 }
-
-
-
 
 

@@ -26,7 +26,22 @@ notes:
 - pru binary code (prustream.bin, pruvideo_XXX.bin) have to exist in
   current working directory of an application that uses/links libarvid
 
+-------------
+Ver 0.3d
+- new video mode 292
+- fixed framerate test
 
+-------------
+Ver 0.3c
+- changed the frame buffer streaming from PRU based to CPU based.
+  The reason was to achieve better picture stability. Previously
+  very slight screen horizontal shaking was present, which was 
+  caused by PRU jitter when it copied DDR memory. CPU based mem copy
+  doesn't cause jitter, but increases the CPU load significantly.
+- remove 'wicd' as it causes screen flickering now and then
+  sudo apt-get purge wicd*
+- identify running services by using:
+  systemctl list-units --type service
 -------------
 Ver 0.3b
 - changed sync pin to p8.28 to fix startup issues

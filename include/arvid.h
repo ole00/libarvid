@@ -44,6 +44,7 @@ IN THE PRODUCT.
 #define ARVID_ERROR_PRU_CLOSE_FAILED (-6)
 #define ARVID_ERROR_ILLEGAL_VIDEO_MODE (-7)
 #define ARVID_ERROR_THREAD_FAILED (-8)
+#define ARVID_ERROR_DMA_INIT_FAILED (-9)
 
 
 #define ARVID_TATE_SWITCH (1 << 19)
@@ -59,6 +60,7 @@ typedef enum  {
 	arvid_240,
 	arvid_392,
 	arvid_400,
+	arvid_292,
 	arvid_last_video_mode
 } arvid_video_mode;
 

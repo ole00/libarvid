@@ -33,6 +33,7 @@ IN THE PRODUCT.
 #include <prussdrv.h>
 #include <pruss_intc_mapping.h>
 
+//#include "libdmacopy.h"
 
 #include <arvid.h>
 #include "libarvid.h"
@@ -56,6 +57,7 @@ static int arvid_resolution[] = {
 	240,
 	392,
 	400,
+	292,
 };
 
 arvid_private ap = {
@@ -68,8 +70,7 @@ arvid_private ap = {
 };
 
 
-extern arvid_line_rate arvid_rate_table[7][RATE_SIZE];
-
+extern arvid_line_rate arvid_rate_table[arvid_last_video_mode][RATE_SIZE];
 
 
 static int get_uio_address_(int id) {
@@ -192,6 +193,7 @@ static void setPruMem(int fbWidth, int fbLines) {
 /* initialize memory mapping */
 int init_memory_mapping_(void) {
 	int fd;
+	//int ret;
 	void * mem;
 
 	//map internal pru memory 
@@ -206,6 +208,7 @@ int init_memory_mapping_(void) {
 	setPruMem(INITIAL_FB_W, INITIAL_FB_LINES);
 
 	//map DDR memory
+
 	fd = open("/dev/mem", O_RDWR);
 	if (fd < 0) {
 		printf("arvid: failed to open /dev/mem %i\n", fd);
@@ -213,12 +216,34 @@ int init_memory_mapping_(void) {
 	}
 	ap.ddrFd = fd;
 	ap.ddrMem = (unsigned int*) mmap(0, 0x400000, PROT_READ | PROT_WRITE, MAP_SHARED, ap.ddrFd, ap.ddrAddress);
+
+
+/*
+	ap.ddrFd = -1;
+	ap.ddrMem = (unsigned int*) dma_malloc(0x200000); // allocate 2 MBytes of dma memory
 	if (ap.ddrMem == NULL) {
-		printf("arvid: failed to map ddr memory\n");
+		printf("arvid: failed allocate DMA memory\n");
 		return ARVID_ERROR_PRU_MEMORY_MAPPING_FAILED;
 	}
+*/
+
+//	ap.ddrFd = -1;
+//	ap.ddrMem = (unsigned int*) malloc(0x200000); // allocate 2 MBytes of system memory
+	if (ap.ddrMem == NULL) {
+		printf("arvid: failed allocate DMA memory\n");
+		return ARVID_ERROR_PRU_MEMORY_MAPPING_FAILED;
+	}
+
 	ap.ddrMem[0] = 0;
 
+	//add shared pru memory to dma mapping (12 KBytes)
+/*
+	ret = dma_add_buffer(mem, 0x4a310000, 12 * 1024);
+	if (ret) {
+		printf("arvid: failed to map PRU shared memory to dma\n");
+		return ARVID_ERROR_PRU_MEMORY_MAPPING_FAILED;
+	}
+*/
 	return 0;
 }
 
@@ -245,8 +270,9 @@ static void init_frame_buffer_(arvid_video_mode mode, int lines, int noFbClear) 
 	ap.lines = lines;
 	ap.fbWidth = arvid_resolution[mode];
 	ap.fbHeight = INITIAL_FB_H;
+	//printf("mode set=%i w=%i\n", mode, ap.fbWidth);
 	ap.fb[0] = (unsigned short*) &ap.ddrMem[16];
-	ap.fb[1] = (unsigned short*) &ap.ddrMem[16 + (0x100000 >> 2)];
+	ap.fb[1] = (unsigned short*) &ap.ddrMem[16 + (0x100000 >> 2)]; //4 bytes per int
 
 	if (noFbClear == 0) {
 		//clean both frames with black color
@@ -270,6 +296,14 @@ int arvid_init_ex(int initFlags) {
 		return ARVID_ERROR_PRU_PERMISSION_REQUIRED;
 	}
 
+/*
+	res = dma_init();
+	if (res) {
+		printf("arvid: failed to initiialise dmacopy: %i\n", res);
+		return ARVID_ERROR_DMA_INIT_FAILED;
+	}
+
+*/
 	res = init_pruss_();
 	if (res) {
 		return res;
@@ -292,7 +326,6 @@ int arvid_init_ex(int initFlags) {
 		printf("arvid: failed to start frame thread: %i\n", res);
 		return ARVID_ERROR_THREAD_FAILED;
 	}
-
 
 	ap.initialized = 0xACCE5503;
 	return 0;
@@ -336,16 +369,30 @@ int arvid_close(void) {
 		error++;
 	}
 
+
 	if (ap.ddrMem != NULL) {
 		munmap(ap.ddrMem, 0x400000);
 		ap.ddrMem = NULL;
 	}
 
+/*
+	if (ap.ddrMem != NULL) {
+		free(ap.ddrMem);
+		ap.ddrMem = NULL;
+	}
+*/
 	if (ap.ddrFd >= 0) {
 		close(ap.ddrFd);
 		ap.ddrFd = -1;
 	}
 
+/*
+	res = dma_exit();
+	if (res) {
+		printf("arvid: dma_exit() failed: %i\n", res);
+		error++;
+	}
+*/
 	if (error == 0) {
 		ap.initialized = 0;
 		return 0;
@@ -486,7 +533,7 @@ int arvid_set_video_mode(arvid_video_mode mode, int lines) {
 	}
 
 	stop_frame_thread();
-	usleep(10*1000);
+	usleep(10 * 1000);
 
 	//set video mode info to pru
 	setPruMem(arvid_resolution[mode], lines);

@@ -34,9 +34,10 @@ This example sets videomode with different number of lines
 and calculate framerates
 *********************************************/
 
-arvid_video_mode videoMode = arvid_320;
+arvid_video_mode videoMode = arvid_292;
 
 static void test(int lines, int seconds) {
+//	printf("test lines=%i seconds=%i mode=%i\n",lines, seconds, videoMode);
 	int res = arvid_set_video_mode(videoMode, lines);
 	printf("{%i, ", lines);
 	if (res == 0) {
@@ -44,6 +45,8 @@ static void test(int lines, int seconds) {
 		usleep(seconds *1000000);
 		frame = arvid_get_frame_number();
 		printf(" %f},\n", (frame / (seconds * 1.0f)));
+	} else {
+	    printf("failed to set videomode\n");
 	}
 }
 
@@ -72,8 +75,13 @@ int main(int argc , char** argv) {
 	maxLines = 248;
 
 	printf("please wait (test takes 42 minues) ....\n");
-
+	arvid_show_service_screen();
+	printf("quick test 5 sec. Expected 60.00 Hz\n");
+	test(252, 5);
+	printf("normal test 1 min. Expected 60.00 Hz\n");
 	test(252, 60);
+	printf("long test 5 min. Expected 60.00 Hz\n");
+	test(252, 5 * 60);
 	test(304, 60);
 	test(279, 60);
 

@@ -66,17 +66,17 @@ Start:
 	SBCO r0, C4, 4, 4
 
 // disable all interrupts: GER to 0
-	mov r1, 0x20010
-	mov r0, 0
-	sbbo r0, r1, 0, 4
+//	mov r1, 0x20010
+//	mov r0, 0
+//	sbbo r0, r1, 0, 4
 
 // ECR0
-	mov r1, 0x20380
-	mov r0, 0xFFFFFFFF
-	sbbo r0, r1, 0,4
+//	mov r1, 0x20380
+//	mov r0, 0xFFFFFFFF
+//	sbbo r0, r1, 0,4
 // ECR1
-	add r1, r1, 4
-	sbbo r0, r1, 0,4
+//	add r1, r1, 4
+//	sbbo r0, r1, 0,4
 
 
 //setup sync data

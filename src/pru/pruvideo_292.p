@@ -38,7 +38,8 @@
 #define PIXEL_COLOR r11
 
 #define GPIO1		0x4804c000
-#define GPIO2       0x481ac000
+#define GPIO2		0x481ac000
+
 //address to set individual bit on GPIO register
 #define GPIO_SET	0x194
 
@@ -48,14 +49,14 @@
 //address to set and clear all bits on GPIO register
 #define GPIO_DATAOUT 0x13c
 
+
 #define SYNC_HI		r7
 #define SYNC_LO		r8
 #define SYNC_BIT	r9
-#define GPIO_OUT_ADDR r12
+#define GPIO_OUT_ADDR  r12
 #define GPIO_OUT_CLEAR r13
 
-#define TOTAL_LINES r3
-
+#define TOTAL_LINES  r3
 
 // ****************************************
 // Program start
@@ -65,16 +66,16 @@ Start:
 	CLR  r0, r0, 4
 	SBCO r0, C4, 4, 4
 
-// disable all interrupts: GER to 0
+//// disable all interrupts: GER to 0
 //	mov r1, 0x20010
 //	mov r0, 0
 //	sbbo r0, r1, 0, 4
 
-// ECR0
+//// ECR0
 //	mov r1, 0x20380
 //	mov r0, 0xFFFFFFFF
 //	sbbo r0, r1, 0,4
-// ECR1
+//// ECR1
 //	add r1, r1, 4
 //	sbbo r0, r1, 0,4
 
@@ -99,8 +100,8 @@ Start:
 	mov r0, 0
 	lbbo r4, r0, 0, 4
 
-// read total lines 
-	mov r0, 0xC		//address 12 (3rd index)
+// load total lines 
+	mov r0, 0xC //address 12 (3rd int index)
 	lbbo TOTAL_LINES, r0, 0, 4
 
 //set frame buffer address (ddr + 64 reserved bytes )
@@ -135,7 +136,6 @@ Start:
 	mov r1, 0;
 	sbbo r1, r0, 0, 4
 
-
 // =============================================================
 // INFO
 // =============================================================
@@ -153,7 +153,6 @@ Start:
 // cycles - either NOP or MOV etc. PRUs usually execute
 // 1 instruction in 1 cycle. Only memory access takes 4 cycles
 // =============================================================
-
 
 // =============================================================
 // Frame start
@@ -182,9 +181,8 @@ Frame:
 
 	//Note - call instruction takes 1 cycle
 
-	// draw typically 304 pixel lines - PAL 50Hz or 262 lines - NTSC (60Hz)
+	// draw typically 304 pixel lines - PAL 50Hz or 262 lines - NTSC (60Hz) 
 	// or something in between for custom refresh rate!
-	// only even numbers for now
 	mov r6.w0, TOTAL_LINES // comps. for call intruction
 lines_loop:
 		sbbo SYNC_BIT, SYNC_LO, 0, 4	//send LO sync signal
@@ -222,7 +220,7 @@ PixelLine:
 	// 8us of HI sync signal (2us + 3x 2us)
 
 	//!!! SBBO 0,4 might take 4 cycles instead of 1 !!!!
-	sbbo SYNC_BIT, SYNC_HI, 0, 4	// send HI sync signal, comps. 1st c !!! VERIFY number of cycles for SBBO!!!
+	sbbo SYNC_BIT, SYNC_HI, 0, 4    // send HI sync signal, comps. 1st c !!! VERIFY number of cycles for SBBO!!!
 
     call Pulse						// wait 2us (1st HI sync signal)
 	NOP								// comps. 2nd cycle
@@ -256,6 +254,7 @@ pixel_line_sync_loop:
 // In total it is 8 cycles per pixel, so in theory PRU should be able to push 1200 pixels
 // horizontally.
 
+// 288 pixels -> 33 cycles per pixel
 
 	//Pulse 1 - black color
     call Pulse						// wait 2us
@@ -265,17 +264,18 @@ pixel_line_sync_loop:
 
 	//Pulse 2 to 24 ->draw real pixels
 
-	//draw 256 pixels
-	mov r0.w0, 256;
+	//draw 292 pixels
+	mov r0.w0, 292;
 
 pixel_line_pixel_loop:
 	//read pixel
 	lbbo PIXEL_COLOR, PIXEL_BUFFER, 0, 2 		// ? 3 or 4  cycles
 
 	//gpio2_0 pin doesn't exist on BBB, so we have to
-    //shift the pixel color value left by 1 bit to start at gpio2_1 pin.
+	//shift the pixel color value left by 1 bit to start at gpio2_1 pin.
 	lsl  PIXEL_COLOR, PIXEL_COLOR, 1
 
+	//output pixel to GPIO pins
 	sbbo PIXEL_COLOR, GPIO_OUT_ADDR, 0, 2
 
 	//jump to next pixel (increase memory addr by 2 bytes)
@@ -284,18 +284,19 @@ pixel_line_pixel_loop:
 	//reduce number of pixel left to draw
 	sub r0.w0, r0.w0, 1							// ? 1 cycle. total 7 c
 
-	//wait 26 passive cycles
-	mov r0.w2, 6								// delay 1 c , total 8 c
+	//wait 22 passive cycles
+	mov r0.w2, 4								// delay 1 c , total 8 c
 pixel_line_pixel_delay:
 	sub r0.w2, r0.w2, 1
 	NOP
 	NOP
 	qbne pixel_line_pixel_delay, r0.w2, 0
-//	NOP
-//	NOP
+	NOP
+	NOP
+	NOP
+	NOP
 
-
-	//8 active cycles + 26 passive cycles = 34 cycles in total for 1 pixel
+	//8 active cycles + 20 passive cycles = 30 cycles in total for 1 pixel
 
 	// check all pixels were drawn 
 	qbne pixel_line_pixel_loop, r0.w0 , 0 		// ? 1 cycle. total 6 c
@@ -315,7 +316,7 @@ send_sync_pulse_2:
 send_pulse_continue:
 	sbbo r1, r0, 0, 4
 
-//  send BLACK on  GPIO port (clear colors)
+	//send BLACK to GPIO port (clear colors)
 	sbbo GPIO_OUT_CLEAR, GPIO_OUT_ADDR, 0, 2
 
 // Final 2 Black pulses (bars)
@@ -328,33 +329,30 @@ send_pulse_continue:
 
 	//Pulse 25
     call Pulse						// wait 2us
-	NOP								// comps. 1st cycle
+	NOP								// comps. 1nd cycle
 	NOP								// comps. 2nd cycle
 	NOP								// comps. 3rd cycle
 
 	//Pulse 26
     call Pulse						// wait 2us
-	NOP								// comps. 1st cycle
+	NOP								// comps. 1nd cycle
 	NOP								// comps. 2nd cycle
 	NOP								// comps. 3rd cycle
 
 //final delay - 320 cycles (to compensate slightly shorter pixels)
 
-	mov r0.w2, 71								// delay 1 c 79, 87
+	mov r0.w2, 109								// delay 1 c 79, 87
 pixel_line_final_delay:
 	sub r0.w2, r0.w2, 1
-	NOP
-	NOP
-	NOP
 	NOP
 	NOP
 	qbne pixel_line_final_delay, r0.w2, 0
 	NOP
 	NOP
-//	NOP
+	NOP
 
-//	NOP
-//	NOP
+	NOP
+	NOP
 //	NOP
 
 

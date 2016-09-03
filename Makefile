@@ -1,7 +1,7 @@
 SDK_DIR := ../pru_sdk
 OUT := build
 
-CFLAGS += -O2 -Wall -Werror -I$(SDK_DIR)/include -I./include
+CFLAGS += -O2 -Wall -Werror -I$(SDK_DIR)/include -I./include -I../dmacopy
 
 LDLIBS += -L$(SDK_DIR)/lib -lpthread -lprussdrv 
 LNFLAGS := $(LDLIBS)
@@ -11,7 +11,8 @@ OFILES := \
 		$(OUT)/blitter.o \
 		$(OUT)/ser_screen.o \
 		$(OUT)/rates.o \
-		$(OUT)/frame_server.o
+		$(OUT)/frame_server.o \
+
 
 ALL_TARGETS := \
 		init \
@@ -26,6 +27,7 @@ ALL_TARGETS := \
 		pruvideo_384.bin \
 		pruvideo_392.bin \
 		pruvideo_400.bin \
+		pruvideo_292.bin \
 		prustream.bin
 
 
@@ -35,7 +37,7 @@ init:
 	mkdir -p $(OUT)
 
 clean:
-	rm -f example *.o *.bin *.lst *.a
+	rm -f example *.o *.bin  *.lst *.a
 	rm -rf $(OUT)
 
 
