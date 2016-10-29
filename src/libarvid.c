@@ -58,6 +58,7 @@ static int arvid_resolution[] = {
 	392,
 	400,
 	292,
+	336,
 };
 
 arvid_private ap = {
