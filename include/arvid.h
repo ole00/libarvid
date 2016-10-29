@@ -55,13 +55,13 @@ IN THE PRODUCT.
 
 typedef enum  {
 	arvid_320 = 0,
-	arvid_256,
-	arvid_288,
-	arvid_384,
-	arvid_240,
-	arvid_392,
-	arvid_400,
-	arvid_292,
+	arvid_256, /* 1 */
+	arvid_288, /* 2 */
+	arvid_384, /* 3 */
+	arvid_240, /* 4 */
+	arvid_392, /* 5 */
+	arvid_400, /* 6 */
+	arvid_292, /* 7 */
 	arvid_last_video_mode
 } arvid_video_mode;
 

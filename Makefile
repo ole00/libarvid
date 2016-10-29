@@ -18,6 +18,7 @@ ALL_TARGETS := \
 		init \
 		simple_test \
 		framerate_test \
+		vmode_test \
 		arvid-server \
 		arvid-splash \
 		pruvideo_240.bin \
@@ -28,7 +29,7 @@ ALL_TARGETS := \
 		pruvideo_392.bin \
 		pruvideo_400.bin \
 		pruvideo_292.bin \
-		prustream.bin
+		prustream.bin \
 
 
 all: $(ALL_TARGETS)
@@ -52,6 +53,10 @@ simple_test:  $(OUT)/simple.o libarvid.a
 	gcc $(LNFLAGS) -o $@ $^
 
 framerate_test:  $(OUT)/framerate.o libarvid.a
+	@echo "linking: $@"
+	gcc $(LNFLAGS) -o $@ $^
+
+vmode_test:  $(OUT)/vmode.o libarvid.a
 	@echo "linking: $@"
 	gcc $(LNFLAGS) -o $@ $^
 
