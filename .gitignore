@@ -6,6 +6,7 @@ arvid-server
 arvid-splash
 framerate_test
 simple_test
+vmode_test
 stop
 log.txt
 splash.txt
