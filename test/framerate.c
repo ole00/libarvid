@@ -74,16 +74,16 @@ int main(int argc , char** argv) {
 	lines = 304;
 	maxLines = 248;
 
-	printf("please wait (test takes 42 minues) ....\n");
+	printf("please wait (test takes ~45 minutes) ....\n");
 	arvid_show_service_screen();
 	printf("quick test 5 sec. Expected 60.00 Hz\n");
 	test(252, 5);
-	printf("normal test 1 min. Expected 60.00 Hz\n");
-	test(252, 60);
+	//printf("normal test 1 min. Expected 60.00 Hz\n");
+	//test(252, 60);
 	printf("long test 5 min. Expected 60.00 Hz\n");
 	test(252, 5 * 60);
-	test(304, 60);
-	test(279, 60);
+	//test(304, 60);
+	//test(279, 60);
 
 	while (lines >= maxLines) {
 		test(lines,60);

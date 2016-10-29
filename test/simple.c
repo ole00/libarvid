@@ -37,6 +37,7 @@ This example:
 - switches videomode to 256x240 NTSC, 60Hz
 - shows service video pattern
 - waits 10 seconds
+- gets and prints the button state
 - closes arvid
 *********************************************/
 
