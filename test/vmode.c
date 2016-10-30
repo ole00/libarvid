@@ -81,20 +81,28 @@ int main(int argc , char** argv) {
 	res = arvid_enum_video_modes(vmodes, &maxVmode);
 	//failed to enumerate - bail out...
 	if (res) {
-	  return 1;
+		return 1;
 	}
 
 	printf("Press & hold [Coin] button to exit!\n");
+
+	//start with specific videomode if passed as aparameter on command line
+	if (argc > 1) {
+		res = set_vmode(atoi(argv[1]), "");
+		if (res < 0) {
+			goto finish;
+		}
+	}
 
 	while (1)
 	{
 		int i;
 		//display all videomodes
 		for (i = maxVmode - 1; i >= 0; i--) {
-		  res = set_vmode(vmodes[i].vmode, "");
-		  if (res < 0) {
-			goto finish;
-		  }
+			res = set_vmode(vmodes[i].vmode, "");
+			if (res < 0) {
+				goto finish;
+			}
 		}
 	}
 
