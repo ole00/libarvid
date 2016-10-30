@@ -24,8 +24,8 @@ static char frame_server_initialised = 0;
 void* thread_runner(void* data) {
 	unsigned short* dstFb[2];		//pru mini frame buffer in shared pru memory
 	unsigned short* src;
-	int width = arvid_get_width();
-	int height = arvid_get_height();
+	int width = ap.fbWidth;
+	int height = ap.lines;
 	int i;
 	volatile int fbIndex = 0;
 	int frame;
@@ -33,11 +33,10 @@ void* thread_runner(void* data) {
 	struct sched_param schedParam;
 
 
-
 	frame_server_initialised = 1;
 	stopThread = 0;
 
-//	printf("w=%i h=%i \n", width, height);
+	//printf("frame server w=%i h=%i\n", width, height);
 
 	//each mini frame buffer is worth of 4 lines
 	dstFb[0] = (unsigned short*)(&ap.pruSharedMem[4 + 340]);
@@ -59,7 +58,6 @@ void* thread_runner(void* data) {
 	}
 
 	while (1) {
-
 		//wait for the start of the frame
 		prussdrv_pru_wait_event(PRU_EVTOUT_1);
 		prussdrv_pru_clear_event(PRU_EVTOUT_1, PRU0_ARM_INTERRUPT);
@@ -109,28 +107,36 @@ void* thread_runner(void* data) {
 
 	}
 finish:
+	stopThread = 0;
 //	printf("thread stopped!\n");
 	return NULL;
 }
 
 int stop_frame_thread(void) {
-//	printf("stopping the thread...\n");
-	stopThread = 1;
+//	printf("stopping the thread init=%i...\n", frame_server_initialised);
+	if (frame_server_initialised) {
+	  stopThread = 1;
+	}
 	return 0;
 }
 
 int start_frame_thread(void) {
 	int result;
+	char waitForInitialThread = 1;
 
 	//a thread was already runing - wait till it's finished
 	if (frame_server_initialised) {
 //		printf("joining thread...\n");
-
+		waitForInitialThread = 0;
 		pthread_join(thread, NULL);
 //		printf("thread joined...\n");
 	}
 
+
 	result = pthread_create(&thread, NULL, thread_runner, NULL);
+	if (waitForInitialThread) {
+	  usleep(5000);
+	}
 	return result;
 }
 
