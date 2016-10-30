@@ -29,17 +29,19 @@
 // Horizontal resolution of 256 pixels
 #define PIXELS_PER_LINE 256
 
-//pixel cycles: 6 * 4 + 0
-#define PASSIVE_CYCLES_PER_PIXEL 6
-// #define PASSIVE_CYCLE_PER_PIXEL_MOD1
-// #define PASSIVE_CYCLE_PER_PIXEL_MOD2
-// #define PASSIVE_CYCLE_PER_PIXEL_MOD3
+//pixel cycles: 5 * 4 + 3
+#define PASSIVE_CYCLES_PER_PIXEL 5
+#define PASSIVE_CYCLE_PER_PIXEL_MOD1
+#define PASSIVE_CYCLE_PER_PIXEL_MOD2
+#define PASSIVE_CYCLE_PER_PIXEL_MOD3
 
-//delay cycles:  124 * 4 + 3
-#define LINE_END_DELAY 124
-#define LINE_END_DELAY_MOD1
-#define LINE_END_DELAY_MOD2
-#define LINE_END_DELAY_MOD3
+#define ASYMETRIC_PIXELS_2
+
+//delay cycles:  61 * 4 + 0
+#define LINE_END_DELAY 61
+// #define LINE_END_DELAY_MOD1
+// #define LINE_END_DELAY_MOD2
+// #define LINE_END_DELAY_MOD3
 
 #include "pruvideo_main.p"
 
