@@ -48,7 +48,7 @@ IN THE PRODUCT.
 //               in ARGB1555 format streamed from DDR
 
 
-//corresponds to videomodes
+//corresponds to videomodes (in chronological order)
 static int arvid_resolution[] = {
 	320,
 	256,
@@ -59,6 +59,19 @@ static int arvid_resolution[] = {
 	400,
 	292,
 	336,
+};
+
+//vmode table - must be sorted in descending oorder
+static arvid_vmode_info vmode_info[] = {
+    { 400, arvid_400 },
+    { 392, arvid_392 },
+    { 384, arvid_384 },
+    { 336, arvid_336 },
+    { 320, arvid_320 },
+    { 292, arvid_292 },
+    { 288, arvid_288 },
+    { 256, arvid_256 },
+    { 240, arvid_240 },
 };
 
 arvid_private ap = {
@@ -271,14 +284,14 @@ static void init_frame_buffer_(arvid_video_mode mode, int lines, int noFbClear) 
 	ap.lines = lines;
 	ap.fbWidth = arvid_resolution[mode];
 	ap.fbHeight = INITIAL_FB_H;
-	//printf("mode set=%i w=%i\n", mode, ap.fbWidth);
+	printf("mode set=%i w=%i lines=%i\n", mode, ap.fbWidth, ap.lines);
 	ap.fb[0] = (unsigned short*) &ap.ddrMem[16];
 	ap.fb[1] = (unsigned short*) &ap.ddrMem[16 + (0x100000 >> 2)]; //4 bytes per int
 
 	if (noFbClear == 0) {
 		//clean both frames with black color
-		arvid_fill_rect(0, 0, 12, ap.fbWidth, ap.lines, 0);
-		arvid_fill_rect(1, 0, 12, ap.fbWidth, ap.lines, 0);
+		arvid_fill_rect(0, 0, 0, ap.fbWidth, ap.lines, 0);
+		arvid_fill_rect(1, 0, 0, ap.fbWidth, ap.lines, 0);
 	}
 }
 
@@ -495,7 +508,7 @@ int arvid_get_video_mode_lines(arvid_video_mode mode, float frate) {
 		}
 	}
 
-	printf("arvid: rate-lines minIndex = %i, minDiff=%f frameRate=%f\n", minIndex, minDiff, table[minIndex].rate);
+	//printf("arvid: rate-lines minIndex = %i, minDiff=%f frameRate=%f\n", minIndex, minDiff, table[minIndex].rate);
 	return table[minIndex].line ;
 }
 
@@ -549,9 +562,33 @@ int arvid_set_video_mode(arvid_video_mode mode, int lines) {
 
 	//return 
 	load_pru_code_(mode);
-
 	return start_frame_thread();
 }
+
+int arvid_enum_video_modes(arvid_vmode_info* vmodeInfo, int* maxItems) {
+	if (NULL == vmodeInfo) {
+		if (NULL == maxItems) {
+			return -1;
+		}
+		*maxItems = arvid_last_video_mode;
+		return -1;
+	}
+
+	if (NULL == maxItems) {
+		return -1;
+	}
+
+	//passed buffer is not big enough
+	if (*maxItems < arvid_last_video_mode) {
+		*maxItems = arvid_last_video_mode;
+		return -1;
+	}
+
+	*maxItems = arvid_last_video_mode;
+	memcpy(vmodeInfo, vmode_info, sizeof(arvid_vmode_info) * arvid_last_video_mode);
+	return 0;
+}
+
 
 unsigned int arvid_get_frame_number(void) {
 	//check not yet initialized

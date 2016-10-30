@@ -54,12 +54,15 @@ IN THE PRODUCT.
 #define CMD_GET_VIDEO_MODE_FREQ 6
 #define CMD_GET_WIDTH 7
 #define CMD_GET_HEIGHT 8
+#define CMD_ENUM_VIDEO_MODES 9 
 #define CMD_INIT 11
 #define CMD_CLOSE 12
 
 #define CMD_GET_LINE_MOD 32
 #define CMD_SET_LINE_MOD 33
 
+
+#define MULTISEND(X) for (i = 0; i < PACKET_CNT; i++) { sendto X ;}
 
 //8 x 8 tiles
 static unsigned char tiles[][64] = {
@@ -494,9 +497,7 @@ int main(int argc, char**argv)
 					int* result =  (int*) &data[1];
 					*result = arvid_get_frame_number();
 					data[0] = packetId;
-					for (i = 0; i < PACKET_CNT; i++) {
-						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
-					}
+					MULTISEND((sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
 				} break;
 			case CMD_VSYNC: //wait for vsync - returns current frame number
 				{
@@ -507,53 +508,59 @@ int main(int argc, char**argv)
 					*button = arvid_get_button_state();
 					//printf("button = %08x \n", *button);
 					data[0] = packetId;
-					for (i = 0; i < PACKET_CNT; i++) {
-						sendto(sockfd, data, 10, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
-					}
+					MULTISEND((sockfd, data, 10, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
 				} break;
 			case CMD_SET_VIDEO_MODE: //set video mode
 				{
 					int* result = (int*) &data[1];
 					*result = arvid_set_video_mode((arvid_video_mode) data[2], data[3]);
 					data[0] = packetId;
-					for (i = 0; i < PACKET_CNT; i++) {
-						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
-					}
+					MULTISEND((sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
 				}; break;
 			case CMD_GET_VIDEO_MODE_LINES: //get video mode lines
 				{
 					int* result = (int*) &data[1];
 					*result = arvid_get_video_mode_lines((arvid_video_mode) data[2], (float)( data[3] / 1000.0f));  
 					data[0] = packetId;
-					for (i = 0; i < PACKET_CNT; i++) {
-						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
-					}
+					MULTISEND((sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
 				}; break;
 			case CMD_GET_VIDEO_MODE_FREQ: //get video mode refresh rate
 				{
 					int* result = (int*) &data[1];
 					*result = arvid_get_video_mode_refresh_rate((arvid_video_mode) data[2], data[3]) * 1000;
 					data[0] = packetId;
-					for (i = 0; i < PACKET_CNT; i++) {
-						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
-					}
+					MULTISEND((sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
 				}; break;
 			case CMD_GET_WIDTH: // get width
 				{
 					int* result = (int*) &data[1];
 					*result = arvid_get_width();
 					data[0] = packetId;
-					for (i = 0; i < PACKET_CNT; i++) {
-						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
-					}
+					MULTISEND((sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
 				}; break;
 			case CMD_GET_HEIGHT: // get height
 				{
 					int* result = (int*) &data[1];
 					*result = arvid_get_height();
 					data[0] = packetId;
-					for (i = 0; i < PACKET_CNT; i++) {
-						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
+					MULTISEND((sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
+				}; break;
+			case CMD_ENUM_VIDEO_MODES: //enumerate video modes
+				{
+					int* result = (int*) &data[1];
+					arvid_vmode_info vmodes[arvid_last_video_mode];
+					int maxModes = arvid_last_video_mode;
+					int error = arvid_enum_video_modes(vmodes, &maxModes);
+					data[0] = packetId;
+					if (error) {
+						printf("failed to enumerate video modes!\n");
+						*result = 0;
+						MULTISEND((sockfd, data, 6, 0, (struct sockaddr *)&cliaddr,sizeof(cliaddr)));
+					} else {
+						int dataSize = sizeof(arvid_vmode_info) * maxModes;
+						*result =  maxModes;
+						memcpy(result + 1, vmodes, dataSize );
+						MULTISEND((sockfd, data, 6 + dataSize , 0, (struct sockaddr *)&cliaddr,sizeof(cliaddr)));
 					}
 				}; break;
 
@@ -561,9 +568,7 @@ int main(int argc, char**argv)
 				{
 					data[0] = packetId;
 					data[1] = (short) arvid_get_line_sync_modifier();
-					for (i = 0; i < PACKET_CNT; i++) {
-						sendto(sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
-					}
+					MULTISEND((sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
 				}; break;
 			case CMD_SET_LINE_MOD: //set line sync modifier
 				{
@@ -575,9 +580,7 @@ int main(int argc, char**argv)
 					int* result = (int*) &data[1];
 					*result = arvid_init();
 					data[0] = packetId;
-					for (i = 0; i < PACKET_CNT; i++) {
-						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
-					}
+					MULTISEND((sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
 					//set cpu freq to stable frequency
 					//system("cpufreq-set -f 800MHz");
 					system("cpufreq-set -f 1000MHz");
@@ -588,9 +591,7 @@ int main(int argc, char**argv)
 					int* result = (int*) &data[1];
 					*result = arvid_close();
 					data[0] = packetId;
-					for (i = 0; i < PACKET_CNT; i++) {
-						sendto(sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr));
-					}
+					MULTISEND((sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
 					//set cpu frequency back to default
 					system("cpufreq-set -g ondemand");
 					packetId = 0x1FFF;

@@ -67,6 +67,10 @@ typedef enum  {
 } arvid_video_mode;
 
 
+typedef struct arvid_vmode_info_s {
+    unsigned short width;
+    unsigned short vmode;
+} arvid_vmode_info;
 
 /**
 Initializes Arvic: loads pru code, creates frame buffer mappings.
@@ -120,10 +124,22 @@ float arvid_get_video_mode_refresh_rate(arvid_video_mode mode, int lines);
 
 
 /**
+Enumerates available videomodes. Results are passed to vmodeInfo variable.
+MaxItems is set to total number of available videomodes (even on error)
+as long as maxItems is not NULL. Set maxItems to the total size of the
+vmodeInfo items before calling the function so the library knows the
+vmodeInfo buffer size.
+The result list is sorted in descending order according the width of the 
+videomode.
+Returns 0 on success, -1 on error. 
+*/
+int arvid_enum_video_modes(arvid_vmode_info* vmodeInfo, int* maxItems);
+
+/**
 Returns the frame buffer pointer for double buffered screen.
 Frame buffer pinters don't change over runtime.
-Note: pixel format of the framebuffer is RGB444 that is 
-      4 bits per color component, no alpha.
+Note: pixel format of the framebuffer is RGB555 that is 
+      5 bits per color component, no alpha.
 index: either 0 or 1
 Returns NULL on error.
 */

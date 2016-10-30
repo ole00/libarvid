@@ -31,11 +31,10 @@ IN THE PRODUCT.
 
 /********************************************
 This example:
-- cycles through video modes
+- enumerates video modes
+- cycles through video modes and shows the service screen
 - exits when coin button is pressed
 *********************************************/
-
-#define CHECK_EXIT if (res < 0) break
 
 static int set_vmode(int mode, char* message)
 {
@@ -46,7 +45,6 @@ static int set_vmode(int mode, char* message)
 
 	lines = arvid_get_video_mode_lines(mode, 60.0f);
 	res = arvid_set_video_mode(mode, lines);
-
 	if (res == 0) {
 		arvid_show_service_screen();
 		printf("example: screen width=%i height=%i lines=%i result=%i\n",
@@ -54,7 +52,10 @@ static int set_vmode(int mode, char* message)
 		for (i = 0; i < 10; i++) {
 		    usleep(1000000); //wait 1 sec
 		    buttons = arvid_get_button_state();
-		    if (buttons & ARVID_COIN_BUTTON) return -1;
+			//check whether the coin button was pressed then exit
+		    if (buttons & ARVID_COIN_BUTTON) {
+			  return -1;
+			}
 		}
 		return 0;
 	} else {
@@ -65,6 +66,8 @@ static int set_vmode(int mode, char* message)
 
 int main(int argc , char** argv) {
 	int res;
+	arvid_vmode_info vmodes[32];
+	int maxVmode = 32;
 
 	//default video mode is PAL 320x240, 50 Hz,  304 total lines
 	res = arvid_init();
@@ -74,36 +77,28 @@ int main(int argc , char** argv) {
 	if (res) {
 		return 1;
 	}
-	//must be called before setting a videomode!
-	arvid_show_service_screen();
+
+	res = arvid_enum_video_modes(vmodes, &maxVmode);
+	//failed to enumerate - bail out...
+	if (res) {
+	  return 1;
+	}
+
+	printf("Press & hold [Coin] button to exit!\n");
 
 	while (1)
 	{
-	    res = set_vmode(arvid_240, "vmode 240");
-	    CHECK_EXIT;
-	
-	    res = set_vmode(arvid_256, "vmode 256");
-	    CHECK_EXIT;
-
-	    res = set_vmode(arvid_288, "vmode 288");
-	    CHECK_EXIT;
-
-	    res = set_vmode(arvid_292, "vmode 292");
-	    CHECK_EXIT;
-
-	    res = set_vmode(arvid_320, "vmode 320");
-	    CHECK_EXIT;
-
-	    res = set_vmode(arvid_384, "vmode 384");
-	    CHECK_EXIT;
-
-	    res = set_vmode(arvid_392, "vmode 392");
-	    CHECK_EXIT;
-
-	    res = set_vmode(arvid_400, "vmode 400");
-	    CHECK_EXIT;
+		int i;
+		//display all videomodes
+		for (i = maxVmode - 1; i >= 0; i--) {
+		  res = set_vmode(vmodes[i].vmode, "");
+		  if (res < 0) {
+			goto finish;
+		  }
+		}
 	}
 
+finish:
 	res = arvid_close();
 	printf("example: arvid_close result=%i\n", res);
 
