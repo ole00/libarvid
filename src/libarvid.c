@@ -284,7 +284,7 @@ static void init_frame_buffer_(arvid_video_mode mode, int lines, int noFbClear) 
 	ap.lines = lines;
 	ap.fbWidth = arvid_resolution[mode];
 	ap.fbHeight = INITIAL_FB_H;
-	printf("mode set=%i w=%i lines=%i\n", mode, ap.fbWidth, ap.lines);
+	//printf("mode set=%i w=%i lines=%i\n", mode, ap.fbWidth, ap.lines);
 	ap.fb[0] = (unsigned short*) &ap.ddrMem[16];
 	ap.fb[1] = (unsigned short*) &ap.ddrMem[16 + (0x100000 >> 2)]; //4 bytes per int
 
