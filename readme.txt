@@ -26,7 +26,13 @@ notes:
 - pru binary code (prustream.bin, pruvideo_XXX.bin) have to exist in
   current working directory of an application that uses/links libarvid
 
-
+-------------
+Ver 0.4a
+- internal: simplified and unified videomode sourcecode. It should be easier
+  to define new videomode by just setting video parameters.
+- added new videomode 336
+- added videomode enumeration function
+- added videomode test app
 -------------
 Ver 0.3e
 - added support for Start button on pin P9_25. When connected to ground
