@@ -12,6 +12,7 @@ OFILES := \
 		$(OUT)/ser_screen.o \
 		$(OUT)/rates.o \
 		$(OUT)/frame_server.o \
+		$(OUT)/text.o
 
 
 ALL_TARGETS := \

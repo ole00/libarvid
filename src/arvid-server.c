@@ -42,6 +42,11 @@ IN THE PRODUCT.
 #include "zlib.h"
 #include "arvid.h"
 #include "libarvid.h"
+#include "blitter.h"
+#include "text.h"
+
+
+#define ARVID_VERSION "ver. 0.4a"
 
 //send back up to 3 packets of the same content
 #define PACKET_CNT 3
@@ -63,138 +68,6 @@ IN THE PRODUCT.
 
 
 #define MULTISEND(X) for (i = 0; i < PACKET_CNT; i++) { sendto X ;}
-
-//8 x 8 tiles
-static unsigned char tiles[][64] = {
-		//digit 0
-		{
-				0, 3, 3, 3, 3, 3, 0, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				0, 3, 3, 3, 3, 3, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-		},
-		//digit 1
-		{
-				0, 0, 0, 0, 3, 0, 0, 0,
-				0, 0, 0, 3, 3, 0, 0, 0,
-				0, 0, 3, 3, 3, 0, 0, 0,
-				0, 0, 0, 3, 3, 0, 0, 0,
-				0, 0, 0, 3, 3, 0, 0, 0,
-				0, 0, 0, 3, 3, 0, 0, 0,
-				0, 0, 3, 3, 3, 3, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-		},
-		//digit 2
-		{
-				0, 3, 3, 3, 3, 3, 0, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				0, 0, 0, 0, 0, 3, 3, 0,
-				0, 3, 3, 3, 3, 3, 0, 0,
-				3, 3, 0, 0, 0, 0, 0, 0,
-				3, 3, 0, 0, 0, 0, 0, 0,
-				3, 3, 3, 3, 3, 3, 3, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-		},
-		//digit 3
-		{
-				0, 3, 3, 3, 3, 3, 0, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				0, 0, 0, 0, 0, 3, 3, 0,
-				0, 0, 0, 3, 3, 3, 0, 0,
-				0, 0, 0, 0, 0, 3, 3, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				0, 3, 3, 3, 3, 3, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-		},
-		//digit 4
-		{
-				0, 0, 0, 3, 3, 3, 3, 0,
-				0, 0, 3, 3, 0, 3, 3, 0,
-				0, 3, 3, 0, 0, 3, 3, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				3, 3, 3, 3, 3, 3, 3, 0,
-				0, 0, 0, 0, 0, 3, 3, 0,
-				0, 0, 0, 0, 0, 3, 3, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-		},
-		//digit 5
-		{
-				3, 3, 3, 3, 3, 3, 3, 0,
-				3, 3, 0, 0, 0, 0, 0, 0,
-				3, 3, 0, 0, 0, 0, 0, 0,
-				0, 3, 3, 3, 3, 3, 0, 0,
-				0, 0, 0, 0, 0, 3, 3, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				0, 3, 3, 3, 3, 3, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-
-		},
-		//digit 6
-		{
-				0, 3, 3, 3, 3, 3, 0, 0,
-				3, 3, 0, 0, 0, 0, 0, 0,
-				3, 3, 0, 0, 0, 0, 0, 0,
-				3, 3, 3, 3, 3, 3, 0, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				0, 3, 3, 3, 3, 3, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-
-		},
-		//digit 7
-		{
-				3, 3, 3, 3, 3, 3, 3, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				0, 0, 0, 0, 3, 3, 0, 0,
-				0, 0, 0, 3, 3, 0, 0, 0,
-				0, 0, 0, 3, 3, 0, 0, 0,
-				0, 0, 0, 3, 3, 0, 0, 0,
-				0, 0, 0, 3, 3, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-		},
-		//digit 8
-		{
-				0, 3, 3, 3, 3, 3, 0, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				0, 3, 3, 3, 3, 3, 0, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				0, 3, 3, 3, 3, 3, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-
-		},
-		//digit 9
-		{
-				0, 3, 3, 3, 3, 3, 0, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				3, 3, 0, 0, 0, 3, 3, 0,
-				0, 3, 3, 3, 3, 3, 3, 0,
-				0, 0, 0, 0, 0, 3, 3, 0,
-				0, 0, 0, 0, 0, 3, 3, 0,
-				0, 3, 3, 3, 3, 3, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-
-		},
-		//dot character
-		{
-				0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 3, 3, 0, 0, 0,
-				0, 0, 0, 3, 3, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-
-		},
-
-};
-
 
 static int noServiceScreen = 0;
 static char* noIpAddress = "0.0.0.0";
@@ -286,77 +159,6 @@ static void getIpAddress(char** result) {
 	}
 }
 
-static void fillRect(int x, int y,int w, int h, unsigned short color, int frameIndex) {
-	int j, i;
-	unsigned short* ptr = fb[frameIndex];
-	int maxW = arvid_get_width();
-
-	ptr += maxW * y + x;
-
-	for (j = 0; j < h; j++) {
-		for (i = 0; i < w; i++) {
-			ptr[i] = color;
-		}
-		ptr += maxW;
-	}
-}
-
-static void paintTile(int x, int  y, int tileIndex, unsigned short color, int frameIndex, int rotate) {
-	int  j, i;
-	unsigned short* ptr = fb[frameIndex];
-	unsigned char* src = tiles[tileIndex];
-	int maxW = arvid_get_width();
-	unsigned short* dst;
-
-	ptr += maxW * y + x;
-
-	if (rotate) {
-		for (j = 0; j < 8; j++) {
-			dst = ptr + (7 - j);
-			for (i = 0; i < 8; i++) {
-				if (src[i]) {
-					*dst = color;
-				}
-				dst += maxW;
-			}
-			src += 8;
-		}
-		return;
-	}
-
-	for (j = 0; j < 8; j++) {
-		for (i = 0; i < 8; i++) {
-			if (src[i]) {
-				ptr[i] = color;
-			}
-		}
-		src += 8;
-		ptr += maxW;
-	}
-}
-
-//naive number painting
-static void paintString(char* text, int x, int y,unsigned short color, int rotate) {
-	while (*text != 0) {
-		char c = *text;
-		int index = c - '0';
-		if (c == '.') {
-			index = 10;
-		}
-
-		if (index >= 0 && index <= 10) {
-			//draw to both frame buffers
-			paintTile(x, y, index, color, 0, rotate);
-			paintTile(x, y, index, color, 1, rotate);
-			if (rotate) {
-				y += 8;
-			} else {
-				x += 8;
-			}
-		}
-		text++;
-	}
-}
 
 static void checkArguments(int argc, char**argv) {
 	int i;
@@ -366,6 +168,57 @@ static void checkArguments(int argc, char**argv) {
 			noServiceScreen = 1;
 		}
 	}
+}
+
+static void drawServiceScreen(char* ipAddr) {
+	int posX, posY;
+	int rotate = arvid_get_button_state() & ARVID_TATE_SWITCH;
+
+	if (noServiceScreen == 0) {
+		int textW = strlen(ARVID_VERSION) * 8;
+		unsigned short color = COLOR(0x3f, 0x3f, 0x3f); //background color
+
+		arvid_show_service_screen();
+
+		//draw version string on screen
+		if (rotate) {
+			posX = 16;
+			posY = ((arvid_get_height() - textW) / 2);
+			arvid_fill_rect(0, posX - 2, posY - 2, 12, textW + 4, color);
+			arvid_fill_rect(1, posX - 2, posY - 2, 12, textW + 4, color);
+		} else {
+			posX = (arvid_get_width() - textW ) / 2;
+			posY = arvid_get_height() - 27;
+			arvid_fill_rect(0, posX - 2, posY - 2, textW + 4, 12, color);
+			arvid_fill_rect(1, posX - 2, posY - 2, textW + 4, 12, color);
+		}
+		//draw the text
+		arvid_draw_string(0, ARVID_VERSION, posX, posY, COLOR(0x7F, 0x7F, 0x7F), rotate);
+		arvid_draw_string(1, ARVID_VERSION, posX, posY, COLOR(0x7F, 0x7F, 0x7F), rotate);
+	}
+
+
+	//draw ip address on screen
+	if (ipAddr != NULL) {
+		int textW = strlen(ipAddr) * 8;
+		unsigned short color = COLOR(0x1F, 0x1F, 0x1F); //background color
+		//draw background of the ip-address (to both frame buffers)
+		if (rotate) {
+			posX = 40;
+			posY = ((arvid_get_height() - textW) / 2);
+			arvid_fill_rect(0, posX - 2, posY - 2, 12, textW + 4, color);
+			arvid_fill_rect(1, posX - 2, posY - 2, 12, textW + 4, color);
+		} else {
+			posX = (arvid_get_width() - textW ) / 2;
+			posY = arvid_get_height() - 48;
+			arvid_fill_rect(0, posX - 2, posY - 2, textW + 4, 12, color);
+			arvid_fill_rect(1, posX - 2, posY - 2, textW + 4, 12, color);
+		}
+		//draw the ip address
+		arvid_draw_string(0, ipAddr, posX, posY, COLOR(0xA0, 0x80, 0), rotate);
+		arvid_draw_string(1, ipAddr, posX, posY, COLOR(0xA0, 0x80, 0), rotate);
+	}
+
 }
 
 int main(int argc, char**argv)
@@ -419,33 +272,7 @@ int main(int argc, char**argv)
 	fb[0] = arvid_get_frame_buffer(0);
 	fb[1] = arvid_get_frame_buffer(1);
 
-
-	if (noServiceScreen == 0) {
-		arvid_show_service_screen();
-	}
-
-	//draw ip address on screen
-	if (ipAddr != NULL) {
-		int posX, posY;
-		int textW = strlen(ipAddr) * 8;
-		unsigned short color = COLOR(0x1F, 0x1F, 0x1F); //background color
-		int rotate = arvid_get_button_state() & ARVID_TATE_SWITCH;
-		//draw background of the ip-address (to both frame buffers)
-		if (rotate) {
-			posX = 40;
-			posY = ((arvid_get_height() - textW) / 2);
-			fillRect(posX - 2, posY - 2, 12, textW + 4, color, 0);
-			fillRect(posX - 2, posY - 2, 12, textW + 4, color, 1);
-		} else {
-			posX = (arvid_get_width() - textW ) / 2;
-			posY = arvid_get_height() - 48;
-			fillRect(posX - 2, posY - 2, textW + 4, 12, color, 0);
-			fillRect(posX - 2, posY - 2, textW + 4, 12, color, 1);
-		}
-		//draw the ip address
-		paintString(ipAddr, posX, posY, COLOR(0xA0, 0x80, 0), rotate);
-	}
-
+	drawServiceScreen(ipAddr);
 
 	len = sizeof(cliaddr);
 
