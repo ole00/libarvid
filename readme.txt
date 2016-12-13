@@ -1,7 +1,8 @@
 ARVID - homebrew arcade videocard
 =================================
+version 0.4b
 
-Arvid is an open source and open hardware videocard with the main goal to 
+Arvid is an open source and open hardware videocard with the main goal to
 produce perfect TV output for arcade games of the past emulated on modern PCs.
 
 more info about the project:
@@ -12,13 +13,18 @@ dependencies:
 am335x_pru_package software from:
 https://github.com/beagleboard/am335x_pru_package
 Make sure you can access its header files and libprussdrv.a library.
+If you have a BBG with kernel 3.8.13 or so, chances are you will
+need no downloads or installation at all as required libraries and
+tools are already installed.
+As of 2016 it doesn't work on 4.X Linux kernel, so use 3.8.X kernel
+which supports PRU.
 
 build:
-build works only on BBB mini computer
-to build all just type 'make'
+- build works only on BBG (BBB) mini computer
+- to build all just type 'make'
 
 notes:
-- libarvid requires superuser access to access PRUSS and gpios
+- libarvid requires superuser access to access PRU and gpios
 - libarvid manages setting up cape manager itself
 - libarvid manages ddr mapping itself
 - works on BBB and BBG but not on older HW as it depends on exact PRU timing (older 
@@ -27,12 +33,23 @@ notes:
   current working directory of an application that uses/links libarvid
 
 -------------
+Ver 0.4b
+- added new function to set screen X offset. This allows you to adjust
+  the screen left position so it better fits your TV set.
+  Use the following functions: arvid_set_line_pos() and arvid_get_line_pos()
+  Valid values are 1 - 111 inclusive, where the default value is 60 (which roughly
+  corresponds to the previous screen X position). All video modes are affected
+  by this modifier the same way, that is all videomodes will be rendered
+  at exactly the same X position irrespective of their resolution.
+
+-------------
 Ver 0.4a
-- internal: simplified and unified videomode sourcecode. It should be easier
+- internal: simplified and unified videomode source code. It should be easier
   to define new videomode by just setting video parameters.
 - added new videomode 336
 - added videomode enumeration function
 - added videomode test app
+- arvid-server now shows the version number on the service screen
 -------------
 Ver 0.3e
 - added support for Start button on pin P9_25. When connected to ground
