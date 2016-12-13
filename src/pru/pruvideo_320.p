@@ -35,11 +35,11 @@
 // #define PASSIVE_CYCLE_PER_PIXEL_MOD2
 // #define PASSIVE_CYCLE_PER_PIXEL_MOD3
 
-//delay cycles:  60 * 4 + 3
-#define LINE_END_DELAY 60
-#define LINE_END_DELAY_MOD1
-#define LINE_END_DELAY_MOD2
-#define LINE_END_DELAY_MOD3
+//delay cycles:  61 * 4 + 0
+#define LINE_END_DELAY 61
+//#define LINE_END_DELAY_MOD1
+//#define LINE_END_DELAY_MOD2
+//#define LINE_END_DELAY_MOD3
 
 #include "pruvideo_main.p"
 
