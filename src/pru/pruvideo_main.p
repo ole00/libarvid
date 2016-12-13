@@ -32,7 +32,6 @@
 
 // ASYMETRIC_PIXELS_2: define to enable asymetric pixels every other pixel
 // ASYMETRIC_PIXELS_3: define to enable asymetric pixels every 3rd pixel
- 
 
 // LINE_END_DELAY: number of delay cycles at the end of the line
 // LINE_END_DELAY_MOD1: 1st modifier of delay cycles at the end of the line 
@@ -42,6 +41,7 @@
 
 
 #define PULSE_CYCLES 56
+#define PULSE_CYCLES_2X 112
 
 #define VIDEO_0 0
 #define VIDEO_1 1
@@ -69,6 +69,7 @@
 #define SYNC_BIT	r9
 #define GPIO_OUT_ADDR  r12
 #define GPIO_OUT_CLEAR r13
+#define LINE_POS_MOD r14
 
 #define TOTAL_LINES  r3
 #define PIXEL_CNT r4
@@ -104,9 +105,13 @@ Start:
 	mov r0, 0
 	lbbo r4, r0, 0, 4
 
-// load total lines 
+// load total lines
 	mov r0, 0xC //address 12 (3rd int index)
 	lbbo TOTAL_LINES, r0, 0, 4
+
+// load line X pos
+	mov r0, 0x14 //address 20 (5th int index)
+	lbbo LINE_POS_MOD, r0, 0, 4
 
 //set frame buffer address (ddr + 64 reserved bytes )
 	mov FRAME_BUFFER, r4
@@ -245,6 +250,8 @@ pixel_line_sync_loop:
 // NOW Draw the pixels !!!
 // There is 52us time to draw the pixels, which is 26 pulses.
 // The first pulse and the last are outside of visible area and should be black color.
+// We can use that black space as a wiggle room to move the whole picture left
+// or right according to the user preferences (value in LINE_POS_MOD).
 // That means we have 24 pulses (48us) to draw pixels in whatever horizontal
 // resolution we want. To draw 480 pixels across, one pixel must be set for 100ns.
 // 48us / 480pixels = 0.1us = 100ns = 20 instruction cycles. Remember PRU runs
@@ -264,7 +271,7 @@ pixel_line_sync_loop:
 
 
 	//Pulse 1 - black color
-    call Pulse						// wait 2us
+    call ModPulseStart				// wait ~ 2us (depends on user preferences)
 	NOP								// comps. 1st cycle
 	NOP								// comps. 2nd cycle
 	NOP								// comps. 3rd cycle
@@ -363,7 +370,7 @@ send_pulse_continue:
 	NOP								// comps. 3rd cycle
 
 	//Pulse 26
-    call Pulse						// wait 2us
+    call ModPulseEnd				// wait ~2us (is modified via LINE_POS_MOD)
 	NOP								// comps. 1st cycle
 	NOP								// comps. 2nd cycle
 	NOP								// comps. 3rd cycle
@@ -523,6 +530,37 @@ pulse_short_loop:
 	NOP
 	NOP
 	NOP
+	ret
+
+// Modified pulse - start of the pixel line (black border on the left)
+ModPulseStart:
+	mov r19.w0, LINE_POS_MOD
+mod_pulse_start_loop:
+    sub r19.w0, r19.w0, 1
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	qbne mod_pulse_start_loop, r19.w0, 0
+	NOP
+	NOP
+	ret
+
+ModPulseEnd:
+// Modified pulse - end of the pixel line (black border on the right)
+	mov r19.w0, PULSE_CYCLES_2X
+	sub r19.w0, r19.w0, LINE_POS_MOD
+mod_pulse_end_loop:
+    sub r19.w0, r19.w0, 1
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	qbne mod_pulse_end_loop, r19.w0, 0
+	NOP
+// note: one NOP is missing to compensate starting SUB instruction
 	ret
 
 
