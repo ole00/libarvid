@@ -186,14 +186,14 @@ Returns current frame number.
 unsigned int arvid_get_frame_number(void);
 
 /**
-Set the line synchronisation modifier.
+Set the line position modifier.
 */
-void arvid_set_line_sync_modifier(int mod);
+void arvid_set_line_pos(int mod);
 
 
 /**
-Returns the line sync modifier.
+Returns the line position modifier.
 */
-int arvid_get_line_sync_modifier(void);
+int arvid_get_line_pos(void);
 
 #endif

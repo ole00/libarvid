@@ -46,7 +46,7 @@ IN THE PRODUCT.
 #include "text.h"
 
 
-#define ARVID_VERSION "ver. 0.4a"
+#define ARVID_VERSION "ver. 0.4b"
 
 //send back up to 3 packets of the same content
 #define PACKET_CNT 3
@@ -391,16 +391,15 @@ int main(int argc, char**argv)
 					}
 				}; break;
 
-			case CMD_GET_LINE_MOD: // get line sync modifier
+			case CMD_GET_LINE_MOD: // get line pos modifier
 				{
 					data[0] = packetId;
-					data[1] = (short) arvid_get_line_sync_modifier();
+					data[1] = (short) arvid_get_line_pos();
 					MULTISEND((sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
 				}; break;
-			case CMD_SET_LINE_MOD: //set line sync modifier
+			case CMD_SET_LINE_MOD: //set line pos modifier
 				{
-					arvid_show_service_screen();
-					arvid_set_line_sync_modifier((int)data[2]);
+					arvid_set_line_pos((int)data[2]);
 				}; break;
 			case CMD_INIT: // init
 				{

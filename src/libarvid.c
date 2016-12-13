@@ -81,6 +81,7 @@ arvid_private ap = {
 		0,
 		0,
 		-1,
+		60  // linePosMod -> affects X position
 };
 
 
@@ -201,7 +202,7 @@ static void setPruMem(int fbWidth, int fbLines) {
 	//set TOTAL_LINES to PRU (vertical resolution)
 	ap.pruMem[PRU_DATA_TOTAL_LINES] = fbLines;
 
-	ap.pruMem[PRU_DATA_LINE_SYNC_MOD] = 0;
+	ap.pruMem[PRU_DATA_LINE_POS_MOD] = ap.linePosMod;
 }
 
 /* initialize memory mapping */
@@ -599,19 +600,26 @@ unsigned int arvid_get_frame_number(void) {
 	return (unsigned int) ap.pruMem[PRU_DATA_FRAME_NUMBER];
 }
 
-void arvid_set_line_sync_modifier(int mod) {
+void arvid_set_line_pos(int mod) {
 	//check not yet initialized
 	if (ap.initialized != 0xACCE5503) {
 		return;
 	}
-	printf("sync mode set: %i\n", mod);
-	ap.pruMem[PRU_DATA_LINE_SYNC_MOD] = mod;
+	//printf("line pos set: %i\n", mod);
+	if (mod < 1) {
+		mod = 1;
+	} else
+	if (mod > 111) {
+		mod = 111;
+	}
+	ap.linePosMod = mod;
+	ap.pruMem[PRU_DATA_LINE_POS_MOD] = mod;
 }
 
-int arvid_get_line_sync_modifier() {
+int arvid_get_line_pos() {
 	//check not yet initialized
 	if (ap.initialized != 0xACCE5503) {
 		return 0;
 	}
-	return ap.pruMem[PRU_DATA_LINE_SYNC_MOD];
+	return ap.linePosMod;
 }

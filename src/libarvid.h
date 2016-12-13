@@ -62,8 +62,8 @@ IN THE PRODUCT.
 //gpio state - buttons
 #define PRU_DATA_GPIO_STATE 4
 
-//line length modifier - affects beam synchronistation
-#define PRU_DATA_LINE_SYNC_MOD 5
+//X position of the first pixel - allows to shift screen horizontally
+#define PRU_DATA_LINE_POS_MOD 5
 
 //currently rendered line
 #define PRU_DATA_LINE_NUMBER 6
@@ -75,11 +75,11 @@ typedef struct arvid_private_t {
 	volatile unsigned int* pruMem;
 	volatile unsigned int* pruSharedMem;
 	int ddrFd;
+	int linePosMod;
 
 	int lines;
 	int fbWidth;
 	int fbHeight;
-
 	unsigned short* fb[2];
 } arvid_private;
 
