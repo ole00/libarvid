@@ -44,9 +44,12 @@ IN THE PRODUCT.
 #include "libarvid.h"
 #include "blitter.h"
 #include "text.h"
+#include "crc.h"
 
 
-#define ARVID_VERSION "ver. 0.4b"
+#define ARVID_VERSION "0.4b"
+#define VER_PREFIX "ver. "
+#define UPDATE_FNAME "update.tgz"
 
 //send back up to 3 packets of the same content
 #define PACKET_CNT 3
@@ -66,17 +69,24 @@ IN THE PRODUCT.
 #define CMD_GET_LINE_MOD 32
 #define CMD_SET_LINE_MOD 33
 
+#define CMD_UPDATE_START 40
+#define CMD_UPDATE_PACKET 41
+#define CMD_UPDATE_END 42
+
 
 #define MULTISEND(X) for (i = 0; i < PACKET_CNT; i++) { sendto X ;}
 
 static int noServiceScreen = 0;
 static char* noIpAddress = "0.0.0.0";
+static int printVersion = 0;
 unsigned short* fb[2];
 
 unsigned char* zSrcData;
 unsigned int zSrcSize;
 unsigned short* zDstData;
 
+unsigned char* updateData = 0;
+int updateSize = 0;
 
 static void sigintCallback(int x) {
 	printf("\nsigint detected\n");
@@ -167,6 +177,9 @@ static void checkArguments(int argc, char**argv) {
 		if (strcmp("-noServiceScreen", argv[i]) == 0) {
 			noServiceScreen = 1;
 		}
+		if (strcmp("-version", argv[i]) == 0) {
+			printVersion = 1;
+		}
 	}
 }
 
@@ -175,7 +188,7 @@ static void drawServiceScreen(char* ipAddr) {
 	int rotate = arvid_get_button_state() & ARVID_TATE_SWITCH;
 
 	if (noServiceScreen == 0) {
-		int textW = strlen(ARVID_VERSION) * 8;
+		int textW = (strlen(VER_PREFIX) + strlen(ARVID_VERSION)) * 8;
 		unsigned short color = COLOR(0x3f, 0x3f, 0x3f); //background color
 
 		arvid_show_service_screen();
@@ -193,8 +206,8 @@ static void drawServiceScreen(char* ipAddr) {
 			arvid_fill_rect(1, posX - 2, posY - 2, textW + 4, 12, color);
 		}
 		//draw the text
-		arvid_draw_string(0, ARVID_VERSION, posX, posY, COLOR(0x7F, 0x7F, 0x7F), rotate);
-		arvid_draw_string(1, ARVID_VERSION, posX, posY, COLOR(0x7F, 0x7F, 0x7F), rotate);
+		arvid_draw_string(0, VER_PREFIX ARVID_VERSION, posX, posY, COLOR(0x7F, 0x7F, 0x7F), rotate);
+		arvid_draw_string(1, VER_PREFIX ARVID_VERSION, posX, posY, COLOR(0x7F, 0x7F, 0x7F), rotate);
 	}
 
 
@@ -221,6 +234,33 @@ static void drawServiceScreen(char* ipAddr) {
 
 }
 
+static unsigned short saveUpdateFile(unsigned int crc) {
+	FILE* f;
+	int len;
+	unsigned int dataCrc = crc_calc(updateData, updateSize);
+	if (dataCrc != crc) {
+		printf("Error: update file mismatch. crc=0x%08x expected=0x%08x size=%i\n",
+			dataCrc, crc, updateSize);
+		return 1;
+	}
+
+	f = fopen(UPDATE_FNAME, "w");
+	if (f == NULL) {
+		printf("Error: failed to save the update file\n");
+		return 2;
+	}
+	len = fwrite(updateData, 1, updateSize, f);
+	if (len != updateSize) {
+		fclose(f);
+		unlink(UPDATE_FNAME);
+		printf("Error: failed to write the update file\n");
+		return 2;
+	}
+	fsync(fileno(f));
+	fclose(f);
+	return 0;
+}
+
 int main(int argc, char**argv)
 {
 	int i;
@@ -236,6 +276,12 @@ int main(int argc, char**argv)
 	int initFlags = 0;
 
 	checkArguments(argc, argv);
+
+	if (printVersion) {
+		printf("%s\n", ARVID_VERSION);
+		return 0;
+	}
+
 
 	zWindow = (unsigned char*) malloc(32 * 1024);
 	if (zWindow == NULL) {
@@ -400,6 +446,59 @@ int main(int argc, char**argv)
 			case CMD_SET_LINE_MOD: //set line pos modifier
 				{
 					arvid_set_line_pos((int)data[2]);
+				}; break;
+			case CMD_UPDATE_START: //initialise update process
+				{
+					int button = arvid_get_button_state();
+					updateSize = data[2] | (((int) data[3]) << 16);
+					data[0] = packetId;
+					// Coin button MUST be pressed for security reasons to prevent
+					// mallicious clients to upload dangerous code.
+					if ((button & ARVID_COIN_BUTTON) == 0) { //not pressed
+						updateSize = 0;
+						data[1] = 3;
+					} else
+					if (updateSize > 1024 * 1024) { //wrong size ?
+						updateSize = 0;
+						data[1] = 1;
+					} else {
+						printf("update START size=%i\n", updateSize);
+						if (updateData != NULL) {
+							free(updateData);
+						}
+						updateData = (unsigned char*) malloc(updateSize);
+						if (updateData == NULL) {
+							printf("error: failed to allocate update data\n");
+							data[1] = 2;
+						} else {
+							data[1] = 0; // OK
+						}
+					}
+					MULTISEND((sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
+				}; break;
+			case CMD_UPDATE_PACKET: //receive single update packet of 1024 bytes
+				{
+					unsigned int index = data[2] * 1024;
+					unsigned short len = data[3];
+					//printf("data %i %i\n", index, len);
+					if (updateSize > 0 && len <= 1024 && len > 0 && index + len <= updateSize) {
+						memcpy(updateData + index, &data[4], len);
+					}
+					// no ack
+				}; break;
+			case CMD_UPDATE_END: // no more update packets - save the update file
+				{
+					unsigned int crc = data[2] | (((int) data[3]) << 16);
+					data[0] = packetId;
+					if (updateSize > 0) {
+						data[1] = saveUpdateFile(crc);
+						free(updateData);
+						updateData = NULL;
+						updateSize = 0;
+					} else {
+						data[1] = 3;
+					}
+					MULTISEND((sockfd, data, 4, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
 				}; break;
 			case CMD_INIT: // init
 				{
