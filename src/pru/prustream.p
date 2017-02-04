@@ -188,8 +188,8 @@ line_sync:
 	add LINE_CNT, LINE_CNT, 1
 
 	//if the line counter is 4 or 8 (index 3 or 7) then save it
-	qbeq save_line_counter, r1, 3
 	qbeq save_line_counter_and_reset_fb, r1, 7
+	qbeq save_line_counter, r1, 3
 
 	//else jump to line finish
 	qba line_finish
