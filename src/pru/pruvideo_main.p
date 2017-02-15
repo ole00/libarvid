@@ -126,6 +126,11 @@ Start:
 	mov PIXEL_CNT, 0
 #endif
 
+#ifdef ASYMETRIC_PIXELS_4
+// initialise pixel counter
+	mov PIXEL_CNT, 0
+#endif
+
 //send initial sync to PRU0
 	mov r0, 0x10000
 	mov r1, 0xac
@@ -330,7 +335,14 @@ pixel_short:
 //every 3rd pixel is slightly wider when ASYMETRIC_PIXELS_3 is defined
 	qbne pixel_short, PIXEL_CNT, 3
 	mov PIXEL_CNT, 0
+pixel_short:
+#endif 
 
+#ifdef ASYMETRIC_PIXELS_4
+	add PIXEL_CNT, PIXEL_CNT, 1
+//every 4th pixel is slightly wider when ASYMETRIC_PIXELS_4 is defined
+	qbne pixel_short, PIXEL_CNT, 4
+	mov PIXEL_CNT, 0
 pixel_short:
 #endif 
 
