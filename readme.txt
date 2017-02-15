@@ -1,6 +1,6 @@
 ARVID - homebrew arcade videocard
 =================================
-version 0.4b
+version 0.4c
 
 Arvid is an open source and open hardware videocard with the main goal to
 produce perfect TV output for arcade games of the past emulated on modern PCs.
@@ -31,6 +31,21 @@ notes:
   hardware PRU clock is slower)
 - pru binary code (prustream.bin, pruvideo_XXX.bin) have to exist in
   current working directory of an application that uses/links libarvid
+
+Ver 0.4c
+-------------
+- Picture quality enhancement. A timing bug was fixed so now
+  the video signal is more stable. Previously every 8-th line
+  was slightly shifted to the right causing artefacts.
+
+- Support for firmware upgrade over network. The server can
+  receive an upgrade file and store it locally. Physical
+  unpacking of the upgrade file and replacement of arvid binaries is
+  performed by the Linux OS scripts during Arvid reboot.
+  NOTE! The Coin button MUST be pressed when the firmware is about
+  to be uploaded. If the coin button is not pressed the uploaded
+  file is rejected. It is for the security of your network
+  to prevent malicious code to be uploaded to your BBG.
 
 -------------
 Ver 0.4b

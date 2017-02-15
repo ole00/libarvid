@@ -47,7 +47,7 @@ IN THE PRODUCT.
 #include "crc.h"
 
 
-#define ARVID_VERSION "0.4b"
+#define ARVID_VERSION "0.4c"
 #define VER_PREFIX "ver. "
 #define UPDATE_FNAME "update.tgz"
 
