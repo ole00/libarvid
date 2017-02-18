@@ -76,6 +76,9 @@ typedef struct arvid_vmode_info_s {
     unsigned short vmode;
 } arvid_vmode_info;
 
+typedef void(*arvid_service_screen_func)(void);
+
+
 /**
 Initializes Arvic: loads pru code, creates frame buffer mappings.
 Also sets the video mode to 320x240 60Hz, black frame buffers.
@@ -199,5 +202,11 @@ void arvid_set_line_pos(int mod);
 Returns the line position modifier.
 */
 int arvid_get_line_pos(void);
+
+/**
+Sets the service screen drawing function. Service screen drawing function 
+will be called when screen saver is canceled.
+*/
+void arvid_set_service_screen_func(arvid_service_screen_func func);
 
 #endif

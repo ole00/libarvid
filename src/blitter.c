@@ -24,6 +24,7 @@ IN THE PRODUCT.
 */
 
 #include <stdlib.h>
+#include "arvid.h"
 #include "blitter.h"
 #include "libarvid.h"
 

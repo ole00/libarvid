@@ -350,6 +350,10 @@ int arvid_init_ex(int initFlags) {
 		return ARVID_ERROR_THREAD_FAILED;
 	}
 
+	ap.activity = 0;
+	ap.lastActivity = 0;
+	ap.burnCounter = 0;
+	ap.serviceScreen = NULL;
 	ap.initialized = 0xACCE5503;
 	return 0;
 }
@@ -462,6 +466,7 @@ int arvid_wait_for_vsync(void) {
 int arvid_get_button_state(void) {
 	//check not yet initialized
 	ARVID_INIT_CHECK;
+	ap.activity++;
 	{
 		//gpi buttons are pulled high by default, we have to invert them
 		volatile unsigned int buttons = ~ap.pruMem[PRU_DATA_GPIO_STATE];
@@ -569,6 +574,8 @@ int arvid_set_video_mode(arvid_video_mode mode, int lines) {
 
 	//arvidStartFrame_ = 0;
 
+	ap.activity++;
+
 	//return 
 	load_pru_code_(mode);
 	return start_frame_thread();
@@ -595,6 +602,7 @@ int arvid_enum_video_modes(arvid_vmode_info* vmodeInfo, int* maxItems) {
 
 	*maxItems = arvid_last_video_mode;
 	memcpy(vmodeInfo, vmode_info, sizeof(arvid_vmode_info) * arvid_last_video_mode);
+	ap.activity++;
 	return 0;
 }
 
@@ -630,4 +638,9 @@ int arvid_get_line_pos() {
 		return 0;
 	}
 	return ap.linePosMod;
+}
+
+
+void arvid_set_service_screen_func(arvid_service_screen_func func) {
+	ap.serviceScreen = func;
 }

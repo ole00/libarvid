@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include <pthread.h>
 #include <semaphore.h>
@@ -11,7 +12,11 @@
 
 #include "arvid.h"
 #include "libarvid.h"
+#include "blitter.h"
+#include "text.h"
 
+// ~3 minutes
+#define MAX_BURN_COUNTER 16000
 
 
 pthread_t thread;
@@ -20,6 +25,72 @@ extern arvid_private ap;
 volatile char stopThread = 0;
 
 static char frame_server_initialised = 0;
+int anim;
+
+
+static void  screenSaverPaint(int rotate) {
+	int width = ap.fbWidth;
+	int height = ap.lines;
+	unsigned short textColor;
+	int x, y;
+
+	anim++;
+	if ((anim & 0xFF) != 1) {
+		return;
+	}
+
+	if (rotate) {
+		x = rand() % (width - 8 * 1);
+		y = rand() % (height - 8 * 5);
+	} else {
+		x = rand() % (width - 8 * 5);
+		y = rand() % (height - 8 * 1);
+	}
+
+	textColor = COLOR(100, 100, 100);
+	arvid_fill_rect(0, 0, 0, width, height, 0);
+	arvid_fill_rect(1, 0, 0, width, height, 0);
+	arvid_draw_string(0, "ARVID", x, y, textColor, rotate);
+	arvid_draw_string(1, "ARVID", x, y, textColor, rotate);
+
+}
+
+static void checkScreenSaver(void) {
+	//no activity
+	if (ap.activity == ap.lastActivity) {
+		if (ap.burnCounter == MAX_BURN_COUNTER) {
+			ap.burnCounter++;
+			anim = 0;
+			//printf("screen saver trigger\n");
+		} else
+		if (ap.burnCounter < MAX_BURN_COUNTER) {
+			ap.burnCounter++;
+		} else {
+			volatile unsigned int buttons = ~ap.pruMem[PRU_DATA_GPIO_STATE];
+			screenSaverPaint(buttons & ARVID_TATE_SWITCH);
+			//check coin and start button to exit screen saver
+			if (
+				(buttons & ARVID_START_BUTTON) ||
+				(buttons & ARVID_COIN_BUTTON)
+			) {
+				//printf("screen saver cancelled\n");
+				ap.burnCounter = 0;
+				if (ap.serviceScreen != NULL) {
+					ap.serviceScreen(); //call registered service screen
+				} else {
+					arvid_show_service_screen(); //show plain service screen
+				}
+			}
+		}
+	}
+	//there was some activity 
+	else
+	{
+		ap.activity = 0;
+		ap.lastActivity = 0;
+		ap.burnCounter = 0;
+	}
+}
 
 void* thread_runner(void* data) {
 	unsigned short* dstFb[2];		//pru mini frame buffer in shared pru memory
@@ -32,7 +103,7 @@ void* thread_runner(void* data) {
 	volatile unsigned int frameNumber;
 	struct sched_param schedParam;
 
-
+	srand(time(NULL));
 	frame_server_initialised = 1;
 	stopThread = 0;
 
@@ -58,6 +129,7 @@ void* thread_runner(void* data) {
 	}
 
 	while (1) {
+		checkScreenSaver();
 		//wait for the start of the frame
 		prussdrv_pru_wait_event(PRU_EVTOUT_1);
 		prussdrv_pru_clear_event(PRU_EVTOUT_1, PRU0_ARM_INTERRUPT);

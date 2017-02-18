@@ -25,6 +25,7 @@ IN THE PRODUCT.
 
 /* Naive text rendering functions */
 #include <stdlib.h>
+#include "arvid.h"
 #include "libarvid.h"
 #include "fixed_font.h"
 

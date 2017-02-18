@@ -81,6 +81,11 @@ typedef struct arvid_private_t {
 	int fbWidth;
 	int fbHeight;
 	unsigned short* fb[2];
+	//for screen saver
+	unsigned int activity;
+	unsigned int lastActivity;
+	unsigned int burnCounter;
+	arvid_service_screen_func serviceScreen;
 } arvid_private;
 
 typedef struct arvid_line_rate_t {

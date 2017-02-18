@@ -183,9 +183,13 @@ static void checkArguments(int argc, char**argv) {
 	}
 }
 
-static void drawServiceScreen(char* ipAddr) {
+void drawServiceScreen(void) {
 	int posX, posY;
 	int rotate = arvid_get_button_state() & ARVID_TATE_SWITCH;
+	char * ipAddr = NULL;
+
+	getIpAddress(&ipAddr);
+	printf("ip address = %s\n", ipAddr);
 
 	if (noServiceScreen == 0) {
 		int textW = (strlen(VER_PREFIX) + strlen(ARVID_VERSION)) * 8;
@@ -271,7 +275,6 @@ int main(int argc, char**argv)
 	int totalSize = sizeof(data);
 	z_stream zStream;
 	unsigned char* zWindow;
-	char* ipAddr = NULL;
 	unsigned short packetId = 0x1FFF;
 	int initFlags = 0;
 
@@ -312,14 +315,13 @@ int main(int argc, char**argv)
 
 	registerSignalHandler();
 
-	getIpAddress(&ipAddr);
-	printf("ip address = %s\n", ipAddr);
 
 	fb[0] = arvid_get_frame_buffer(0);
 	fb[1] = arvid_get_frame_buffer(1);
 
-	drawServiceScreen(ipAddr);
-
+	//register our service screen
+	arvid_set_service_screen_func(drawServiceScreen);
+	drawServiceScreen();
 	len = sizeof(cliaddr);
 
 	while(1)
