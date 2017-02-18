@@ -62,10 +62,12 @@ static int arvid_resolution[] = {
 	416,
 	448,
 	512,
+	640,
 };
 
 //vmode table - must be sorted according to screen width in descending oorder
 static arvid_vmode_info vmode_info[] = {
+    { 640, arvid_640 },
     { 512, arvid_512 },
     { 448, arvid_448 },
     { 416, arvid_416 },

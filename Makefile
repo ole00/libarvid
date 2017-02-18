@@ -35,6 +35,7 @@ ALL_TARGETS := \
 		pruvideo_416.bin \
 		pruvideo_448.bin \
 		pruvideo_512.bin \
+		pruvideo_640.bin \
 		prustream.bin \
 
 
