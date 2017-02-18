@@ -1,6 +1,6 @@
 ARVID - homebrew arcade videocard
 =================================
-version 0.4c
+version 0.4d
 
 Arvid is an open source and open hardware videocard with the main goal to
 produce perfect TV output for arcade games of the past emulated on modern PCs.
@@ -31,6 +31,19 @@ notes:
   hardware PRU clock is slower)
 - pru binary code (prustream.bin, pruvideo_XXX.bin) have to exist in
   current working directory of an application that uses/links libarvid
+
+Ver 0.4d
+-------------
+- Added new mid-res video modes 416, 448, 512, 640
+
+- Added automatic screen saver. After 3 minutes of 
+  inactivity the screen saver is started. To cancel it
+  either a Coin or Start button has to be pressed or
+  arvid API function has to be called. For example
+  when an emulator is started the screen server is cancelled.
+  This feature prevents screen burn when Arvid is idling
+  in service screen or when an emulator / app crashed
+  while unattended (inside arcade cab).
 
 Ver 0.4c
 -------------
