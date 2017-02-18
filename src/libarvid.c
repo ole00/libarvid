@@ -60,10 +60,12 @@ static int arvid_resolution[] = {
 	292,
 	336,
 	416,
+	448,
 };
 
 //vmode table - must be sorted in descending oorder
 static arvid_vmode_info vmode_info[] = {
+    { 448, arvid_448 },
     { 416, arvid_416 },
     { 400, arvid_400 },
     { 392, arvid_392 },

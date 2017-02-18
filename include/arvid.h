@@ -64,6 +64,7 @@ typedef enum  {
 	arvid_292, /* 7 */
 	arvid_336, /* 8 */
 	arvid_416, /* 9 */
+	arvid_448, /* 10 */
 	arvid_last_video_mode
 } arvid_video_mode;
 
