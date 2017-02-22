@@ -365,7 +365,7 @@ int main(int argc, char**argv)
 					zStream.next_out = (void*) dst;
 					inflateBack(&zStream, inflate_in, NULL, inflate_out, dst);
 
-					//printf("  blit: size=%i, y=%i infl=%i\n", size, y, inflated);
+					//printf("  blit: size=%i, y=%i w=%i\n", size, y, width);
 				} break;
 			case CMD_FRAME_NUMBER: // get frame number
 				{
