@@ -102,6 +102,7 @@ void* thread_runner(void* data) {
 	int frame;
 	volatile unsigned int frameNumber;
 	struct sched_param schedParam;
+	int line;
 
 	srand(time(NULL));
 	frame_server_initialised = 1;
@@ -145,6 +146,7 @@ void* thread_runner(void* data) {
 		frame =  (frameNumber & 1);
 		src = ap.fb[frame];
 		i = height;
+		line = 0;
 		fbIndex = 0;
 		//copy one frame (one screen)
 		do {
@@ -170,6 +172,10 @@ void* thread_runner(void* data) {
 
 			}
 			i -= 4;						 // advance 4 lines
+			line += 4;
+			if (line == 128) { //192
+				ap.vsyncCnt = frameNumber + 1;;
+			}
 
 			//frame numbers are offsync -> early exit
 			if (frameNumber != ap.pruMem[PRU_DATA_FRAME_NUMBER]) {

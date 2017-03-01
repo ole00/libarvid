@@ -47,7 +47,7 @@ IN THE PRODUCT.
 #include "crc.h"
 
 
-#define ARVID_VERSION "0.4d"
+#define ARVID_VERSION "0.4dY"
 #define VER_PREFIX "ver. "
 #define UPDATE_FNAME "update.tgz"
 
@@ -350,7 +350,7 @@ int main(int argc, char**argv)
 		switch (data[0]) {
 			case CMD_BLIT: // blit 
 				{
-					int bufferIndex = 1 - (arvid_get_frame_number() & 1);
+					int bufferIndex =  (arvid_get_vsync_number() & 1);
 					//int bufferIndex = data[3];
 					unsigned short size = data[1];
 					unsigned short y = data[2];

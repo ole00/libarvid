@@ -451,15 +451,13 @@ unsigned int arvid_get_frame_buffer_size(void) {
 int arvid_wait_for_vsync(void) {
 	//check not yet initialized
 	ARVID_INIT_CHECK;
-	volatile unsigned int frame = ap.pruMem[PRU_DATA_FRAME_NUMBER];
+	volatile unsigned int frame = ap.vsyncCnt;
 	unsigned int arvidStartFrame_ = frame;
-
 	//check frame number has changed
 	while (frame == arvidStartFrame_) {
 		usleep(37);
-		frame = ap.pruMem[PRU_DATA_FRAME_NUMBER];
+		frame = ap.vsyncCnt;
 	}
-//	arvidStartFrame_ = frame;
 	return 1 - (frame & 1);
 }
 
@@ -615,6 +613,13 @@ unsigned int arvid_get_frame_number(void) {
 
 	return (unsigned int) ap.pruMem[PRU_DATA_FRAME_NUMBER];
 }
+
+unsigned int arvid_get_vsync_number(void) {
+	if (ap.initialized != 0xACCE5503) {
+		return 0;
+	}
+	return ap.vsyncCnt;
+} 
 
 void arvid_set_line_pos(int mod) {
 	//check not yet initialized
