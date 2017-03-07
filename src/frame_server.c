@@ -172,10 +172,10 @@ void* thread_runner(void* data) {
 
 			}
 			i -= 4;						 // advance 4 lines
-			line += 4;
-			if (line == 128) { //192
+			if (line == ap.vsyncLine) {
 				ap.vsyncCnt = frameNumber + 1;;
 			}
+			line += 4;
 
 			//frame numbers are offsync -> early exit
 			if (frameNumber != ap.pruMem[PRU_DATA_FRAME_NUMBER]) {

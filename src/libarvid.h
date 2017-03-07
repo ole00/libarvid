@@ -82,6 +82,7 @@ typedef struct arvid_private_t {
 	int fbHeight;
 	unsigned short* fb[2];
 	volatile unsigned int vsyncCnt;
+	int vsyncLine;
 	//for screen saver
 	unsigned int activity;
 	unsigned int lastActivity;
@@ -95,5 +96,6 @@ typedef struct arvid_line_rate_t {
 } arvid_line_rate;
 
 unsigned int arvid_get_vsync_number(void);
+int arvid_get_virtual_vsync(void);
 
 #endif

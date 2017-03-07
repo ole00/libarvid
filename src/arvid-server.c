@@ -47,7 +47,7 @@ IN THE PRODUCT.
 #include "crc.h"
 
 
-#define ARVID_VERSION "0.4dY"
+#define ARVID_VERSION "0.4e"
 #define VER_PREFIX "ver. "
 #define UPDATE_FNAME "update.tgz"
 
@@ -68,6 +68,7 @@ IN THE PRODUCT.
 
 #define CMD_GET_LINE_MOD 32
 #define CMD_SET_LINE_MOD 33
+#define CMD_SET_VIRT_VSYNC 34
 
 #define CMD_UPDATE_START 40
 #define CMD_UPDATE_PACKET 41
@@ -350,7 +351,9 @@ int main(int argc, char**argv)
 		switch (data[0]) {
 			case CMD_BLIT: // blit 
 				{
-					int bufferIndex =  (arvid_get_vsync_number() & 1);
+					int bufferIndex = arvid_get_virtual_vsync() == -1 ? //virtual vsync disabled ?
+							1 - (arvid_get_frame_number() & 1) :
+							(arvid_get_vsync_number() & 1);
 					//int bufferIndex = data[3];
 					unsigned short size = data[1];
 					unsigned short y = data[2];
@@ -448,6 +451,10 @@ int main(int argc, char**argv)
 			case CMD_SET_LINE_MOD: //set line pos modifier
 				{
 					arvid_set_line_pos((int)data[2]);
+				}; break;
+			case CMD_SET_VIRT_VSYNC: // set virtual vsync
+				{
+					arvid_set_virtual_vsync(data[2] == 0xFFFF ? -1 : (int) data[2]);
 				}; break;
 			case CMD_UPDATE_START: //initialise update process
 				{

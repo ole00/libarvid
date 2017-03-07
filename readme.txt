@@ -1,6 +1,6 @@
 ARVID - homebrew arcade videocard
 =================================
-version 0.4d
+version 0.4e
 
 Arvid is an open source and open hardware videocard with the main goal to
 produce perfect TV output for arcade games of the past emulated on modern PCs.
@@ -31,6 +31,21 @@ notes:
   hardware PRU clock is slower)
 - pru binary code (prustream.bin, pruvideo_XXX.bin) have to exist in
   current working directory of an application that uses/links libarvid
+
+
+
+Ver 0.4e
+-------------
+- Added virtual vsync option that allows to minimize
+  screen latencies. New function was added :
+  arvid_set_virtual_vsync(int vsync_line)
+  where vsync_line is the scan line that triggers the
+  vsync event. By default the feature is disabled
+  (vsync_line = -1). If enabled arvid_wait_for_vsync() function
+  will wait until the vsync_line is rendered on the screen
+  and then it returns to the caller. If disabled
+  arvid_wait_for_vsync() waits until the last line is rendered
+  on screen and then it returns to the caller.
 
 Ver 0.4d
 -------------

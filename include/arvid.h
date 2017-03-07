@@ -204,6 +204,11 @@ Returns the line position modifier.
 int arvid_get_line_pos(void);
 
 /**
+Set the virtual vsync value, -1 for off
+*/
+int arvid_set_virtual_vsync(int vsync_line);
+
+/**
 Sets the service screen drawing function. Service screen drawing function 
 will be called when screen saver is canceled.
 */

@@ -354,6 +354,7 @@ int arvid_init_ex(int initFlags) {
 	ap.lastActivity = 0;
 	ap.burnCounter = 0;
 	ap.serviceScreen = NULL;
+	ap.vsyncLine = -1;
 	ap.initialized = 0xACCE5503;
 	return 0;
 }
@@ -448,17 +449,46 @@ unsigned int arvid_get_frame_buffer_size(void) {
 	return ap.lines * ap.fbWidth;
 }
 
+int arvid_set_virtual_vsync(int vsync_line) {
+	ARVID_INIT_CHECK;
+	ap.vsyncLine =
+		(vsync_line < 0) ? -1 :
+		(vsync_line > ap.fbHeight) ? (ap.fbHeight / 4) * 4 :
+		(vsync_line / 4) * 4;
+
+	//printf("virtual vsync set to %i\n", ap.vsyncLine);
+	return 0;
+}
+
+int arvid_get_virtual_vsync(void) {
+	ARVID_INIT_CHECK;
+	return ap.vsyncLine;
+}
+
 int arvid_wait_for_vsync(void) {
 	//check not yet initialized
 	ARVID_INIT_CHECK;
-	volatile unsigned int frame = ap.vsyncCnt;
-	unsigned int arvidStartFrame_ = frame;
-	//check frame number has changed
-	while (frame == arvidStartFrame_) {
-		usleep(37);
-		frame = ap.vsyncCnt;
+
+	if (ap.vsyncLine == -1) {
+		volatile unsigned int frame = ap.pruMem[PRU_DATA_FRAME_NUMBER];
+		unsigned int arvidStartFrame_ = frame;
+		//check frame number has changed
+		while (frame == arvidStartFrame_) {
+			usleep(37);
+			frame = ap.pruMem[PRU_DATA_FRAME_NUMBER];
+		}
+		return 1 - (frame & 1);
 	}
-	return 1 - (frame & 1);
+	else {
+		volatile unsigned int frame = ap.vsyncCnt;
+		unsigned int arvidStartFrame_ = frame;
+		//check frame number has changed
+		while (frame == arvidStartFrame_) {
+			usleep(37);
+			frame = ap.vsyncCnt;
+		}
+		return 1 - (frame & 1);
+	}
 }
 
 int arvid_get_button_state(void) {
@@ -573,6 +603,7 @@ int arvid_set_video_mode(arvid_video_mode mode, int lines) {
 	//arvidStartFrame_ = 0;
 
 	ap.activity++;
+	ap.vsyncLine = -1; //disable virtual vsync
 
 	//return 
 	load_pru_code_(mode);
