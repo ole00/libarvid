@@ -19,6 +19,7 @@ OFILES := \
 ALL_TARGETS := \
 		init \
 		simple_test \
+		button_test \
 		framerate_test \
 		vmode_test \
 		arvid-server \
@@ -56,6 +57,10 @@ prucode.lst: prucode.p
 	pasm -l $^
 
 simple_test:  $(OUT)/simple.o libarvid.a
+	@echo "linking: $@"
+	gcc $(LNFLAGS) -o $@ $^
+
+button_test:  $(OUT)/button.o libarvid.a
 	@echo "linking: $@"
 	gcc $(LNFLAGS) -o $@ $^
 
