@@ -1,0 +1,201 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "ti,beaglebone", "ti,beaglebone-black", "ti,beaglebone-green";
+	part-number = "pru_arvid";
+	version = "00A0";
+
+	/* Define pins and resources this config sets up. */
+	/* pin numbers on header P8 or P9 */
+
+	exclusive-use = 
+	"P8.45", /* GPIO2_6 */
+	"P8.46", /* GPIO2_7 */
+	"P8.43", /* GPIO2_8 */
+	"P8.44", /* GPIO2_9 */
+	"P8.41", /* GPIO2_10 */
+
+	"P8.42", /* GPIO2_11 */
+	"P8.39", /* GPIO2_12 */
+	"p8.40", /* GPIO2_13 */
+	"p8.37", /* GPIO2_14 */
+	"p8.38", /* GPIO2_15 */
+
+	"p8.18", /* GPIO2_1 */
+	"p8.9",  /* GPIO2_5 */
+	"p8.10", /* GPIO2_4 */
+	"p8.7",  /* GPIO2_2 */
+	"p8.8",  /* GPIO2_3 */
+
+	"p8.28", /* GPIO2_24 - sync */
+
+	"p9.27", /* GPIO3_19 TATE switch */
+	"p9.28", /* GPIO3_17 Coin P1 button */
+	"p9.25", /* GPIO3_21 Start P1 button */
+
+	/* O.R.B Open Retro Board - joystick controller input */
+
+	"p9.11", /* GPIO0_30 - Service switch */
+	"p9.13", /* GPIO0_31 - Button 4 P1 */
+	"p9.17", /* GPIO0_5  - Button 2 P1 */
+	"p9.18", /* GPIO0_4  - Button 3 P1 */
+/*	"p9.19", * GPIO0_13 - blocked by i2c */
+/*	"p9.20", * GPIO0_12 - blocked by i2c */
+	"p9.21", /* GPIO0_3  - Down P1 */
+	"p9.22", /* GPIO0_2  - Left P1 */
+	"p9.24", /* GPIO0_15 - Up P1 */
+	"p9.26", /* GPIO0_14 - Test Switch */
+	"p9.29", /* GPIO3_15 - Start P2 */
+	"p9.30", /* GPIO3_16 - Coin P2 */
+	"p9.31", /* GPIO3_14 - Tilt Switch */
+	"p9.41", /* GPIO0_20 */
+	"p9.42", /* GPIO0_7 */
+
+	"p8.13", /* GPIO0_23 - Button 4 P2 */
+	"p8.14", /* GPIO0_26 - Button 3 P2 */
+	"p8.17", /* GPIO0_27 - Button 2 P2 */
+	"p8.19", /* GPIO0_22 - Button 1 P2 */
+	"p8.31", /* GPIO0_10 - Left P2 */
+	"p8.32", /* GPIO0_11 - Right P2 */
+	"p8.33", /* GPIO0_9  - Down P2 */
+	"p8.35", /* GPIO0_8  - Up P2 */
+
+
+	"pru1" ; /* PRU unit 1 */
+
+	fragment@0 {
+		target = <&am33xx_pinmux>;
+
+		__overlay__ {
+			status = "okay";
+
+			arvid_pru_pins: pinmux_arvid_pru_pins {
+				/* PRU Low latency IO */
+				pinctrl-single,pins = <
+					0x0A0 0x07  /* P8.45 mode 7 -> output */
+					0x0A4 0x07  /* P8.46 mode 7 -> output */
+					0x0A8 0x07  /* P8.43 mode 7 -> output */
+					0x0AC 0x07  /* P8.44 mode 7 -> output */
+					0x0B0 0x07  /* P8.41 mode 7 -> output */
+
+					0x0B4 0x07  /* P8.42 mode 7 -> output */
+					0x0B8 0x07  /* P8.39 mode 7 -> output */
+					0x0BC 0x07  /* P8.40 mode 7 -> output */
+					0x0C0 0x07  /* P8.37 mode 7 -> output */
+					0x0C4 0x07  /* P8.38 mode 7 -> output */
+
+					0x08C 0x07  /* P8.18 mode 7 -> output */
+					0x09C 0x07  /* P8.9  mode 7 -> output */
+					0x098 0x07  /* P8.10 mode 7 -> output */
+					0x090 0x07  /* P8.7  mode 7 -> output */
+					0x094 0x07  /* P8.8  mode 7 -> output */
+
+					0x0E8 0x07  /* P8.28 mode 7 -> output */
+
+					0x1A4 0x37  /* P9.27 mode 37 -> input, pullup */
+					0x19C 0x37  /* P9.28 mode 37 -> input, pullup */
+					0x1AC 0x37  /* P9.25 mode 37 -> input, pullup */
+
+					0x070 0x37  /* P9.11 */
+					0x074 0x37  /* P9.13 */
+					0x15C 0x37  /* P9.17 */
+					0x158 0x37  /* P9.18 */
+					/* 0x17C 0x37   P9.19 - blocked by i2c */
+					/* 0x178 0x37   P9.20 - blocked by i2c */
+					0x154 0x37  /* P9.21 */
+					0x150 0x37  /* P9.22 */
+					0x184 0x37  /* P9.24 */
+					0x180 0x37  /* P9.26 */
+					0x194 0x37  /* P9.29 */
+					0x198 0x37  /* P9.30 */
+					0x190 0x37  /* P9.31 */
+					0x1B4 0x37  /* P9.41 */
+					0x164 0x37  /* P9.42 */
+
+					0x024 0x37  /* P8.13 */
+					0x028 0x37  /* P8.14 */
+					0x02C 0x37  /* P8.17 */
+					0x020 0x37  /* P8.19 */
+					0x0D8 0x37  /* P8.31 */
+					0x0DC 0x37  /* P8.32 */
+					0x0D4 0x37  /* P8.33 */
+					0x0D0 0x37  /* P8.35 */
+
+				>;
+			};
+
+		};
+	};
+
+	fragment@1 {
+		target = <&pruss>;
+		__overlay__ {
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&arvid_pru_pins>;
+			enabled = <1>;
+
+			/* 
+			NOTE: all gpioX controllers are numbered from 1 !
+			That means GPIO2 is actually specified here as 'gpio3' !
+			The second number is the gpio bit on particular gpio controller.
+			The third number is polarity: 0: inactive low (pulled down), 1: inactive high (pulled up)
+			*/
+
+			hv_sync {
+				pin-names = "Arvid:hv_sync";
+				gpios = <&gpio3 24 0>;
+			};
+
+
+			red_bits {
+				pin-names = "Arvid:red_0", "Arvid:red_1", "Arvid:red_2", "Arvid:red_3", "Arvid:red_4";
+				gpios     = <&gpio3 11 0    &gpio3 12 0    &gpio3 13 0   &gpio3 14 0   &gpio3 15 0>;
+			};
+
+			green_bits {
+				pin-names = "Arvid:green_0", "Arvid:green_1", "Arvid:green_2", "Arvid:green_3", "Arvid:green_4";
+				gpios     = <&gpio3 6 0       &gpio3 7 0       &gpio3 8 0     &gpio3 9 0    &gpio3 10 0>;
+			};
+
+			blue_bits {
+				pin-names = "Arvid:blue_0", "Arvid:blue_1", "Arvid:blue_2", "Arvid:blue_3", "Arvid:blue_4";
+				gpios     = <&gpio3 1 0      &gpio3 2 0      &gpio3 3 0      &gpio3 4 0      &gpio3 5 0>;
+			};
+
+			buttons {
+				pin-names = "Arvid:tate_switch", "Arvid:coin_button_p1", "Arvid:start_button_p1";
+				gpios = <&gpio4 19 1             &gpio4 17 1             &gpio4 21 1>;
+			};
+
+			buttons_2 {
+				pin-names = "Arvid:tilt_switch", "Arvid:coin_button_p2", "Arvid:start_button_p2", "Arvid:service_switch", "Arvid:test_switch";
+				gpios = <&gpio4 14 1              &gpio4 16 1             &gpio4 15 1              &gpio1 30 1            &gpio1 14 1>;
+			};
+
+			player1_direction {
+				pin-names = "Arvid:p1_left","Arvid:p1_right", "Arvid:p1_up", "Arvid:p1_down";
+				gpios     = <&gpio1 2 1     &gpio1 7 1       &gpio1 15 1     &gpio1 3 1>;
+			};
+
+
+			player1_buttons {
+				pin-names = "Arvid:p1_button1", "Arvid:p1_button2", "Arvid:p1_button3", "Arvid:p1_button4";
+				gpios     = <&gpio1 20 1         &gpio1 5 1          &gpio1 4 1        &gpio1 31 1>;
+			};
+
+			player2_direction {
+				pin-names = "Arvid:p2_left", "Arvid:p2_right", "Arvid:p2_up", "Arvid:p2_down";
+				gpios     = <&gpio1 10 1      &gpio1 11 1        &gpio1 8 1    &gpio1 9 1>;
+			};
+
+			player2_buttons {
+				pin-names = "Arvid:p2_button1", "Arvid:p2_button2", "Arvid:p2_button3", "Arvid:p2_button4";
+				gpios     = <&gpio1 22 1         &gpio1 27 1        &gpio1 26 1        &gpio1 23 1>;
+			};
+
+		};
+	};
+
+};
