@@ -51,6 +51,34 @@ IN THE PRODUCT.
 #define ARVID_COIN_BUTTON (1 << 17)
 #define ARVID_START_BUTTON (1 << 21)
 
+// new switch & button definition
+#define ARVID_TEST_SWITCH (1 << 24)
+#define ARVID_SERVICE_SWITCH (1 << 20)
+#define ARVID_TILT_SWITCH (1 << 14)
+
+#define ARVID_P1_COIN (1 << 17)
+#define ARVID_P1_START (1 << 21)
+#define ARVID_P1_UP (1 << 7)
+#define ARVID_P1_DOWN (1 << 25)
+#define ARVID_P1_LEFT (1 << 3)
+#define ARVID_P1_RIGHT (1 << 2)
+#define ARVID_P1_B1 (1 << 5)
+#define ARVID_P1_B2 (1 << 4)
+#define ARVID_P1_B3 (1 << 31)
+#define ARVID_P1_B4 (1 << 30)
+
+#define ARVID_P2_COIN (1 << 16)
+#define ARVID_P2_START (1 << 15)
+#define ARVID_P2_UP (1 << 8)
+#define ARVID_P2_DOWN (1 << 9)
+#define ARVID_P2_LEFT (1 << 10)
+#define ARVID_P2_RIGHT (1 << 11)
+#define ARVID_P2_B1 (1 << 22)
+#define ARVID_P2_B2 (1 << 27)
+#define ARVID_P2_B3 (1 << 26)
+#define ARVID_P2_B4 (1 << 23)
+
+
 #define FLAG_NO_FB_CLEAR (1 << 0)
 
 typedef enum  {
