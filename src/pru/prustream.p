@@ -27,6 +27,7 @@
 #include "utils.p"
 
 #define GPIO3 0x481ae000
+#define GPIO0 0x44e07000
 #define GPIO_DATAIN 0x138
 #define LINE_CNT r2
 #define BLOCK_COUNT r3
@@ -35,10 +36,11 @@
 #define FRAME_BUFFER r5
 #define PIXEL_BUFFER r6
 #define PIXEL_ADDR   r7
-#define GPIO_IN_ADDR r8
-#define DATA r9
-#define DATA3 r10
+#define GPIO3_IN_ADDR r8
+#define GPIO0_IN_ADDR r9
+#define DATA r10
 #define FRAME_NUM  r26
+#define TMPR r27
 
 #define STATE_ADDR 			0x10000
 #define DDR_ADDR			0x10004
@@ -66,7 +68,8 @@ Start:
 	SBCO r0, C4, 4, 4
 
 	//set-up GPIO address - will need it to read button state
-	mov GPIO_IN_ADDR, GPIO3 | GPIO_DATAIN
+	mov GPIO3_IN_ADDR, GPIO3 | GPIO_DATAIN
+	mov GPIO0_IN_ADDR, GPIO0 | GPIO_DATAIN
 
 	//synchronization  with PRU1
 	// wait until STATE is equal 0xAC
@@ -107,9 +110,24 @@ init_sync:
 streaming_start:
 
 
-	//read gpio buttons into r1
-	lbbo r1, GPIO_IN_ADDR, 0, 4
-	//store button state (now in r1) to pruMem[4]
+	//read gpio3 buttons into r1
+	lbbo r1, GPIO3_IN_ADDR, 0, 4
+	//read gpio0 button into r0
+	lbbo r0, GPIO0_IN_ADDR, 0, 4
+
+	//relocate bits 14 and 15 from r0 to bits 24 and 25
+	//otherwise they would clash with gpio3 bits (stored in r1)
+    lsl TMPR, r0, 10  //shift r0 right by 10 bits and store to TMPR
+	and TMPR.b3, TMPR.b3, 3 // keep only these 2 bits (24,25), clear everything else
+
+	//clear bits 14 & 15 in r0
+	and r0.b1, r0.b1, 0x3F
+
+	//combine button readings
+	or r1, r1, r0
+	or r1.b3, r1.b3, TMPR.b3
+
+	//store combined button state (now in r1) to pruMem[4]
 	mov r0, BUTTON_STATE_ADDR
 	sbbo r1, r0, 0, 4
 
