@@ -47,7 +47,7 @@ IN THE PRODUCT.
 #include "crc.h"
 
 
-#define ARVID_VERSION "0.4e"
+#define ARVID_VERSION "0.4f"
 #define VER_PREFIX "ver. "
 #define UPDATE_FNAME "update.tgz"
 
@@ -286,6 +286,7 @@ int main(int argc, char**argv)
 		return 0;
 	}
 
+	printf("arvid-server v. %s\n", ARVID_VERSION);
 
 	zWindow = (unsigned char*) malloc(32 * 1024);
 	if (zWindow == NULL) {
