@@ -1,6 +1,6 @@
 ARVID - homebrew arcade videocard
 =================================
-version 0.4e
+version 0.4f
 
 Arvid is an open source and open hardware videocard with the main goal to
 produce perfect TV output for arcade games of the past emulated on modern PCs.
@@ -33,6 +33,15 @@ notes:
   current working directory of an application that uses/links libarvid
 
 
+Ver 0.4f
+-------------
+- Added reading of more GPIO buttons. This now covers 2 player
+  buttons up to 4 buttons each, 4 directions and Start and Coin.
+  Compatibility with the previous version of software is preserved.
+- Modified DTBO to claim extra GPIOs required for reading buttons.
+- Added new test app for checking the state of buttons.
+- Modified video mode height of the service screen. Now the height
+  is 224 lines to better adhere to NTSC standard at 60Hz.
 
 Ver 0.4e
 -------------
