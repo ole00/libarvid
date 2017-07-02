@@ -264,6 +264,7 @@ static unsigned short saveUpdateFile(unsigned int crc) {
 	}
 	fsync(fileno(f));
 	fclose(f);
+	system("sync");
 	return 0;
 }
 
