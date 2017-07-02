@@ -41,7 +41,11 @@ Ver 0.4f
 - Modified DTBO to claim extra GPIOs required for reading buttons.
 - Added new test app for checking the state of buttons.
 - Modified video mode height of the service screen. Now the height
-  is 224 lines to better adhere to NTSC standard at 60Hz.
+  is 224 lines to better adhere to NTSC standard at 60Hz
+- Added power-off command to arvid server. This allows arvid client
+  to remotely poweroff the BBG. It forces arvid to close and exits
+  the server with return code 50. The 'poweroff' command itself
+  has to be issued in a shell script invoking the arvid-server.
 
 Ver 0.4e
 -------------

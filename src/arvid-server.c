@@ -74,6 +74,7 @@ IN THE PRODUCT.
 #define CMD_UPDATE_PACKET 41
 #define CMD_UPDATE_END 42
 
+#define CMD_EXIT_POWEROFF 50
 
 #define MULTISEND(X) for (i = 0; i < PACKET_CNT; i++) { sendto X ;}
 
@@ -278,6 +279,7 @@ int main(int argc, char**argv)
 	unsigned char* zWindow;
 	unsigned short packetId = 0x1FFF;
 	int initFlags = 0;
+	int exitCode = 0;
 
 	checkArguments(argc, argv);
 
@@ -532,7 +534,22 @@ int main(int argc, char**argv)
 					packetId = 0x1FFF;
 				}; break;
 
+			case CMD_EXIT_POWEROFF: // exit for poweroff
+				{
+					int* result = (int*) &data[1];
+					printf("Poweroff requested.\n");
+					*result = arvid_close();
+					data[0] = packetId;
+					MULTISEND((sockfd, data, 6, 0,(struct sockaddr *)&cliaddr,sizeof(cliaddr)));
+					exitCode = CMD_EXIT_POWEROFF;
+					usleep(500*1000);
+					goto exitLabel; //exit the server
+				}; break;
 
 		}
 	}
+
+exitLabel:
+//	printf("exiting with code: %i\n", exitCode);
+	return exitCode;
 }
