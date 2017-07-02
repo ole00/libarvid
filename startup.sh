@@ -30,6 +30,11 @@ while [ $infinity -gt 0 ]; do
 	#use -noServiceScreen parameter to hide the service screen and keep the logo
 	./arvid-server  >> log.txt
 
+	if [ $? -eq 50 ]; then
+		echo "Poweroff detected"
+		poweroff
+		exit 50
+	fi
 	#if the server unexpectedly stopped, then start it again
 	#unless 'stop' file exists
 
